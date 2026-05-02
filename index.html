@@ -35,7 +35,7 @@
 
     /* Pages */
     .page{display:none;} .page.active{display:block;}
-    .wrapper{max-width:760px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1;}
+    .wrapper{max-width:760px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1;overflow:visible;}
 
     /* Animations */
     @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
@@ -134,7 +134,7 @@
     .stat-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;letter-spacing:0.5px;}
 
     /* Search */
-    .search-wrap{margin-bottom:14px;position:relative;}
+    .search-wrap{margin-bottom:14px;}
     .search-result{display:none;align-items:center;gap:16px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:16px;padding:16px 20px;margin-bottom:12px;}
     .search-result.show{display:flex;animation:fadeUp 0.35s ease;}
     .result-emoji{font-size:28px;}
@@ -144,14 +144,15 @@
     .search-box:focus-within{border-color:var(--orange-border);background:rgba(251,146,60,0.04);box-shadow:0 0 0 3px rgba(251,146,60,0.06);}
     .search-input{flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--text);font-family:'Lora',serif;padding:10px 0;}
     .search-input::placeholder{color:rgba(255,255,255,0.2);}
-    /* Dropdown */
-    .search-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#18181b;border:1px solid var(--orange-border);border-radius:14px;overflow:hidden;z-index:99;box-shadow:0 16px 48px rgba(0,0,0,0.6);display:none;}
+    /* Dropdown — positioned relative to #searchContainer */
+    #searchContainer{position:relative;}
+    .search-dropdown{position:absolute;top:100%;left:0;right:0;background:#18181b;border:1px solid var(--orange-border);border-radius:14px;overflow:hidden;z-index:999;box-shadow:0 20px 60px rgba(0,0,0,0.7);display:none;margin-top:4px;}
     .search-dropdown.open{display:block;animation:fadeUp 0.18s ease;}
     .drop-item{padding:13px 18px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:flex-start;gap:12px;}
     .drop-item:last-child{border-bottom:none;}
-    .drop-item:hover{background:var(--orange-dim);}
+    .drop-item:hover,.drop-item:active{background:var(--orange-dim);}
     .drop-icon{font-size:18px;margin-top:1px;flex-shrink:0;}
-    .drop-body{flex:1;}
+    .drop-body{flex:1;min-width:0;}
     .drop-cat{font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
     .drop-text{font-size:13px;color:var(--text);line-height:1.45;}
     .drop-text mark{background:none;color:var(--orange);font-weight:600;font-style:normal;}
@@ -378,17 +379,19 @@
 <div class="page active" id="page-home">
 <div class="wrapper">
 
-  <div class="search-wrap fade-up d1" style="padding-top:36px;">
-    <div class="search-result" id="searchResult">
-      <div class="result-emoji">🔥</div>
-      <div>
-        <div class="result-count" id="resultCount">0 people</div>
-        <div class="result-label">share a similar problem. You are definitely not alone.</div>
+  <div style="position:relative;padding-top:36px;" id="searchContainer">
+    <div class="search-wrap fade-up d1">
+      <div class="search-result" id="searchResult">
+        <div class="result-emoji">🔥</div>
+        <div>
+          <div class="result-count" id="resultCount">0 people</div>
+          <div class="result-label">share a similar problem. You are definitely not alone.</div>
+        </div>
       </div>
-    </div>
-    <div class="search-box">
-      <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
-      <button class="search-btn" onclick="doSearch()">Find Others →</button>
+      <div class="search-box">
+        <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
+        <button class="search-btn" onclick="doSearch()">Find Others →</button>
+      </div>
     </div>
     <div class="search-dropdown" id="searchDropdown"></div>
   </div>
