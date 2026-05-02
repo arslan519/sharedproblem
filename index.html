@@ -292,10 +292,7 @@
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <div class="logo" onclick="showPage('home')">
-      <div class="logo-icon">🤔</div>
-      <span class="logo-text">Shared Problem</span>
-    </div>
+    <span class="logo-text" onclick="showPage('home')" style="cursor:pointer;font-size:16px;font-weight:600;color:rgba(255,255,255,0.88);letter-spacing:-0.2px;">Shared Problem</span>
     <div class="nav-links">
       <button class="nav-link active-nav" onclick="showPage('home')" id="nav-home">Home</button>
       <button class="nav-link" onclick="showPage('about')" id="nav-about">About</button>
@@ -312,8 +309,23 @@
 <!-- ========== HOME PAGE ========== -->
 <div class="page active" id="page-home">
 <div class="wrapper">
+
+  <div class="search-wrap fade-up d1" style="padding-top:36px;">
+    <div class="search-result" id="searchResult">
+      <div class="result-emoji">🔥</div>
+      <div>
+        <div class="result-count" id="resultCount">0 people</div>
+        <div class="result-label">share a similar problem. You are definitely not alone.</div>
+      </div>
+    </div>
+    <div class="search-box">
+      <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
+      <button class="search-btn" onclick="doSearch()">Find Others →</button>
+    </div>
+  </div>
+
   <div class="hero">
-    <div class="hero-tag fade-up d1">✦ You are probably not alone</div>
+    <div class="hero-tag fade-up d2">✦ You are probably not alone</div>
     <h1 class="fade-up d2">
       <span class="white">Is it </span><em>just me,</em><br/>
       <span class="white">or does everyone<br/>deal with this?</span>
@@ -333,20 +345,6 @@
     <div class="stat-item">
       <div class="stat-num" id="statSolutions">...</div>
       <div class="stat-label">Solutions Added</div>
-    </div>
-  </div>
-
-  <div class="search-wrap fade-up d3">
-    <div class="search-result" id="searchResult">
-      <div class="result-emoji">🔥</div>
-      <div>
-        <div class="result-count" id="resultCount">0 people</div>
-        <div class="result-label">share a similar problem. You are definitely not alone.</div>
-      </div>
-    </div>
-    <div class="search-box">
-      <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
-      <button class="search-btn" onclick="doSearch()">Find Others →</button>
     </div>
   </div>
 
@@ -598,6 +596,22 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Solution Modal -->
+<div class="modal-overlay" id="solutionOverlay" onclick="closeSolutionOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSolutionModal()">✕ close</button>
+    <h3>Add Your Solution</h3>
+    <p class="modal-sub" id="solutionProblemTitle" style="color:var(--orange);font-style:italic;font-size:14px;margin-bottom:20px;"></p>
+    <div class="modal-anon"><div class="anon-dot"></div> Your solution is 100% anonymous</div>
+    <label>What worked for you?</label>
+    <textarea id="solutionText" placeholder="Describe exactly what you did and why it worked. Be as specific as possible — specifics help people most..."></textarea>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeSolutionModal()">Cancel</button>
+      <button class="modal-submit" id="solutionSubmitBtn" onclick="submitSolution()">Submit Solution →</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const SUPABASE_URL = 'https://odowphgmadyoadiztjmu.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kb3dwaGdtYWR5b2FkaXp0am11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzE0NDksImV4cCI6MjA5MzMwNzQ0OX0.E9reCzIFafIRA1zvGNCrJs2lOFPo8l46wmv3KupoNf0';
@@ -676,7 +690,9 @@
       return;
     }
     container.innerHTML = list.map((p,i) => {
-      const sol = p.solutions && p.solutions[0];
+      const sols = p.solutions || [];
+      const topSol = sols[0];
+      const solCount = sols.length;
       const m = metooed[p.id];
       return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*50}ms">
         <div class="card-top">
@@ -684,7 +700,7 @@
             <div class="card-cat">${p.category}</div>
             <div class="card-text">${p.text}</div>
             <div class="card-meta">
-              <span class="card-meta-item">💬 ${p.solution_count||0} solutions</span>
+              <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
               <span class="card-meta-dot"> · </span>
               <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>
             </div>
@@ -696,11 +712,15 @@
           </button>
         </div>
         <div class="card-expanded">
-          <div class="solution-label">✦ Top Solution</div>
-          ${sol
-            ? `<div class="solution-box">"${sol.text}"</div><div class="solution-actions"><button class="sol-btn sol-btn-green" onclick="event.stopPropagation()">👍 Worked for me</button><button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openModal()">+ Add solution</button></div>`
-            : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div><div class="solution-actions"><button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openModal()">+ Add solution</button></div>`
+          <div class="solution-label">✦ ${solCount > 0 ? solCount+' Solution'+(solCount!==1?'s':'') : 'No Solutions Yet'}</div>
+          ${sols.length > 0
+            ? sols.map(s => `<div class="solution-box">"${s.text}"</div>`).join('')
+            : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`
           }
+          <div class="solution-actions">
+            ${topSol ? `<button class="sol-btn sol-btn-green" onclick="event.stopPropagation()">👍 Worked for me</button>` : ''}
+            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id}, \`${p.text.replace(/`/g,"'")}\`)">+ Add solution</button>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -748,6 +768,44 @@
   function openModal() { document.getElementById('modalOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
   function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
   function closeModalOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+
+  // --- Solution Modal ---
+  let currentSolutionProblemId = null;
+  function openSolutionModal(problemId, problemText) {
+    currentSolutionProblemId = problemId;
+    document.getElementById('solutionProblemTitle').textContent = problemText;
+    document.getElementById('solutionText').value = '';
+    document.getElementById('solutionOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSolutionModal() {
+    document.getElementById('solutionOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    currentSolutionProblemId = null;
+  }
+  function closeSolutionOutside(e) { if(e.target===document.getElementById('solutionOverlay')) closeSolutionModal(); }
+
+  async function submitSolution() {
+    const text = document.getElementById('solutionText').value.trim();
+    if (!text) { showToast('Please describe your solution first.'); return; }
+    if (!currentSolutionProblemId) return;
+    const btn = document.getElementById('solutionSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    const { error } = await db.from('solutions').insert({ problem_id: currentSolutionProblemId, text, helpful_count: 0 });
+    if (error) { btn.disabled=false; btn.textContent='Submit Solution →'; showToast('Something went wrong. Please try again.'); return; }
+    // update solution_count on problem
+    const p = allProblems.find(x => x.id===currentSolutionProblemId);
+    if (p) {
+      p.solution_count = (p.solution_count||0)+1;
+      if (!p.solutions) p.solutions = [];
+      p.solutions.push({ text, helpful_count:0 });
+      await db.from('problems').update({ solution_count: p.solution_count }).eq('id', currentSolutionProblemId);
+    }
+    btn.disabled=false; btn.textContent='Submit Solution →';
+    closeSolutionModal();
+    render();
+    showToast('✅ Solution added! Thank you for helping others.');
+  }
 
   async function submitProblem() {
     const text = document.getElementById('problemText').value.trim();
