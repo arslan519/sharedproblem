@@ -172,6 +172,14 @@
     .sol-btn-green:hover { background:rgba(74,222,128,0.15); }
     .sol-btn-ghost { background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--muted); }
     .sol-btn-ghost:hover { border-color:var(--border2); color:var(--text2); }
+    .solution-item { display:flex; gap:14px; align-items:flex-start; margin-bottom:14px; }
+    .solution-num { width:22px; height:22px; min-width:22px; background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-family:'DM Mono',monospace; color:var(--orange); font-weight:600; margin-top:16px; }
+    .solution-body { flex:1; }
+    .helpful-btn { display:inline-flex; align-items:center; gap:6px; background:none; border:1px solid var(--border); border-radius:8px; padding:5px 12px; cursor:pointer; transition:all 0.2s; margin-top:8px; }
+    .helpful-btn:hover { border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.05); }
+    .helpful-btn.voted { border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.07); cursor:default; pointer-events:none; }
+    .helpful-icon { font-size:12px; }
+    .helpful-text { font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); }
 
     /* Loading */
     .loading { text-align:center; padding:56px 20px; }
@@ -690,10 +698,22 @@
       return;
     }
     container.innerHTML = list.map((p,i) => {
-      const sols = p.solutions || [];
-      const topSol = sols[0];
+      const sols = [...(p.solutions || [])].sort((a,b) => (b.helpful_count||0) - (a.helpful_count||0));
       const solCount = sols.length;
       const m = metooed[p.id];
+      const solsHTML = sols.length > 0
+        ? sols.map((s,idx) => `
+            <div class="solution-item" id="sol-wrap-${s.id}">
+              <div class="solution-num">${idx+1}</div>
+              <div class="solution-body">
+                <div class="solution-box">"${s.text}"</div>
+                <button class="helpful-btn" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
+                  <span class="helpful-icon">👍</span>
+                  <span class="helpful-text" id="helpful-text-${s.id}">${s.helpful_count > 0 ? s.helpful_count+' '+(s.helpful_count===1?'person found':'people found')+' this helpful' : 'Was this helpful?'}</span>
+                </button>
+              </div>
+            </div>`).join('')
+        : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`;
       return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*50}ms">
         <div class="card-top">
           <div class="card-body">
@@ -712,14 +732,10 @@
           </button>
         </div>
         <div class="card-expanded">
-          <div class="solution-label">✦ ${solCount > 0 ? solCount+' Solution'+(solCount!==1?'s':'') : 'No Solutions Yet'}</div>
-          ${sols.length > 0
-            ? sols.map(s => `<div class="solution-box">"${s.text}"</div>`).join('')
-            : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`
-          }
-          <div class="solution-actions">
-            ${topSol ? `<button class="sol-btn sol-btn-green" onclick="event.stopPropagation()">👍 Worked for me</button>` : ''}
-            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id}, \`${p.text.replace(/`/g,"'")}\`)">+ Add solution</button>
+          <div class="solution-label">✦ ${solCount > 0 ? solCount+' Solution'+(solCount!==1?'s':'')+' — ranked by helpfulness' : 'No Solutions Yet'}</div>
+          ${solsHTML}
+          <div class="solution-actions" style="margin-top:14px;">
+            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id}, \`${p.text.replace(/`/g,"'")}\`)">+ Add your solution</button>
           </div>
         </div>
       </div>`;
@@ -747,6 +763,25 @@
     updateStats();
     await db.from('problems').update({ metoo_count:p.metoo_count }).eq('id',id);
     showToast('🔥 Me Too counted! You are not alone.');
+  }
+
+  let helpfulVoted = JSON.parse(localStorage.getItem('sp_helpful') || '{}');
+
+  async function markHelpful(solId, problemId) {
+    if (helpfulVoted[solId]) { showToast('You already marked this as helpful!'); return; }
+    helpfulVoted[solId] = true;
+    localStorage.setItem('sp_helpful', JSON.stringify(helpfulVoted));
+    const p = allProblems.find(x => x.id===problemId);
+    if (!p || !p.solutions) return;
+    const sol = p.solutions.find(s => s.id===solId);
+    if (!sol) return;
+    sol.helpful_count = (sol.helpful_count||0)+1;
+    const textEl = document.getElementById('helpful-text-'+solId);
+    const btn = document.getElementById('helpful-'+solId);
+    if (textEl) textEl.textContent = sol.helpful_count+' '+(sol.helpful_count===1?'person found':'people found')+' this helpful';
+    if (btn) btn.classList.add('voted');
+    await db.from('solutions').update({ helpful_count: sol.helpful_count }).eq('id', solId);
+    showToast('👍 Marked as helpful!');
   }
 
   function doSearch() {
