@@ -134,7 +134,7 @@
     .stat-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;letter-spacing:0.5px;}
 
     /* Search */
-    .search-wrap{margin-bottom:14px;}
+    .search-wrap{margin-bottom:14px;position:relative;}
     .search-result{display:none;align-items:center;gap:16px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:16px;padding:16px 20px;margin-bottom:12px;}
     .search-result.show{display:flex;animation:fadeUp 0.35s ease;}
     .result-emoji{font-size:28px;}
@@ -144,6 +144,19 @@
     .search-box:focus-within{border-color:var(--orange-border);background:rgba(251,146,60,0.04);box-shadow:0 0 0 3px rgba(251,146,60,0.06);}
     .search-input{flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--text);font-family:'Lora',serif;padding:10px 0;}
     .search-input::placeholder{color:rgba(255,255,255,0.2);}
+    /* Dropdown */
+    .search-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#18181b;border:1px solid var(--orange-border);border-radius:14px;overflow:hidden;z-index:99;box-shadow:0 16px 48px rgba(0,0,0,0.6);display:none;}
+    .search-dropdown.open{display:block;animation:fadeUp 0.18s ease;}
+    .drop-item{padding:13px 18px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:flex-start;gap:12px;}
+    .drop-item:last-child{border-bottom:none;}
+    .drop-item:hover{background:var(--orange-dim);}
+    .drop-icon{font-size:18px;margin-top:1px;flex-shrink:0;}
+    .drop-body{flex:1;}
+    .drop-cat{font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px;}
+    .drop-text{font-size:13px;color:var(--text);line-height:1.45;}
+    .drop-text mark{background:none;color:var(--orange);font-weight:600;font-style:normal;}
+    .drop-meta{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:3px;}
+    .drop-empty{padding:18px;font-size:13px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;}
     .search-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:12px;padding:12px 22px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;box-shadow:0 4px 16px rgba(251,146,60,0.3);transition:all 0.2s;}
     .search-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,146,60,0.4);}
 
@@ -377,6 +390,7 @@
       <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
       <button class="search-btn" onclick="doSearch()">Find Others →</button>
     </div>
+    <div class="search-dropdown" id="searchDropdown"></div>
   </div>
 
   <div class="hero">
@@ -951,35 +965,88 @@
     showToast('👍 Marked as helpful!');
   }
 
+  function highlightMatch(text, q){
+    if(!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if(idx===-1) return text;
+    return text.slice(0,idx)+'<mark>'+text.slice(idx,idx+q.length)+'</mark>'+text.slice(idx+q.length);
+  }
+
+  function showDropdown(q){
+    const dd = document.getElementById('searchDropdown');
+    if(!q){ dd.classList.remove('open'); dd.innerHTML=''; return; }
+    const matches = allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase())).slice(0,6);
+    if(matches.length===0){
+      dd.innerHTML=`<div class="drop-empty">🌱 No matching problems yet — <span style="color:var(--orange);cursor:pointer;" onclick="openModal()">share yours</span></div>`;
+    } else {
+      dd.innerHTML = matches.map(p=>`
+        <div class="drop-item" onclick="selectDropItem(${p.id})">
+          <div class="drop-icon">👆</div>
+          <div class="drop-body">
+            <div class="drop-cat">${p.category}</div>
+            <div class="drop-text">${highlightMatch(p.text, q)}</div>
+            <div class="drop-meta">${(p.metoo_count||0).toLocaleString()} Me Toos · ${p.solution_count||0} solutions</div>
+          </div>
+        </div>`).join('');
+    }
+    dd.classList.add('open');
+  }
+
+  function selectDropItem(id){
+    // Close dropdown, expand the selected card, scroll to it
+    document.getElementById('searchDropdown').classList.remove('open');
+    document.getElementById('searchInput').value='';
+    document.getElementById('searchResult').classList.remove('show');
+    render();
+    setTimeout(()=>{
+      const card = document.getElementById('card-'+id);
+      if(card){
+        card.scrollIntoView({behavior:'smooth', block:'center'});
+        setTimeout(()=>toggleCard(id), 400);
+      }
+    }, 100);
+  }
+
   function doSearch(){
     const q=document.getElementById('searchInput').value.trim();
     const result=document.getElementById('searchResult');
+    document.getElementById('searchDropdown').classList.remove('open');
     if(!q){result.classList.remove('show');render();return;}
     const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
     const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
     document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
     result.classList.add('show');
     render();
-    // Scroll to problem list so results are visible
     setTimeout(()=>{
       const el=document.getElementById('problemList');
       if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
     },100);
   }
 
-  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+  document.getElementById('searchInput').addEventListener('keydown',e=>{
+    if(e.key==='Enter') doSearch();
+    if(e.key==='Escape'){ document.getElementById('searchDropdown').classList.remove('open'); }
+  });
+
   document.getElementById('searchInput').addEventListener('input',()=>{
     const q=document.getElementById('searchInput').value.trim();
     const result=document.getElementById('searchResult');
-    if(!q){result.classList.remove('show');render();return;}
-    // Filter problems in real time as user types
+    if(!q){result.classList.remove('show');render();document.getElementById('searchDropdown').classList.remove('open');return;}
+    showDropdown(q);
     render();
-    // Show result banner with count
     const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
     const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
     document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
     result.classList.add('show');
   });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', e=>{
+    if(!document.getElementById('searchInput').contains(e.target) && !document.getElementById('searchDropdown').contains(e.target)){
+      document.getElementById('searchDropdown').classList.remove('open');
+    }
+  });
+
   function fillSearch(el){
     document.getElementById('searchInput').value=el.textContent;
     doSearch();
