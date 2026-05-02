@@ -850,7 +850,9 @@
     const q=document.getElementById('searchInput').value.toLowerCase().trim();
     const list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
     document.getElementById('sectionCount').textContent=list.length+' problems';
-    document.getElementById('sectionLabel').textContent=q?'Search Results':'Most Shared Right Now';
+    document.getElementById('sectionLabel').textContent=q?'Search Results for "'+q+'"':'Most Shared Right Now';
+    // Highlight section label when searching
+    document.getElementById('sectionLabel').style.color=q?'var(--orange)':'rgba(255,255,255,0.22)';
     const container=document.getElementById('problemList');
     if(list.length===0){
       container.innerHTML=`<div class="empty"><div class="empty-icon">🌱</div><div class="empty-text">No one has shared this yet.<br/><span class="empty-link" onclick="openModal()">Be the first →</span></div></div>`;
@@ -958,11 +960,30 @@
     document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
     result.classList.add('show');
     render();
+    // Scroll to problem list so results are visible
+    setTimeout(()=>{
+      const el=document.getElementById('problemList');
+      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
   }
 
   document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
-  document.getElementById('searchInput').addEventListener('input',()=>{document.getElementById('searchResult').classList.remove('show');render();});
-  function fillSearch(el){document.getElementById('searchInput').value=el.textContent;doSearch();}
+  document.getElementById('searchInput').addEventListener('input',()=>{
+    const q=document.getElementById('searchInput').value.trim();
+    const result=document.getElementById('searchResult');
+    if(!q){result.classList.remove('show');render();return;}
+    // Filter problems in real time as user types
+    render();
+    // Show result banner with count
+    const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
+    const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
+    document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
+    result.classList.add('show');
+  });
+  function fillSearch(el){
+    document.getElementById('searchInput').value=el.textContent;
+    doSearch();
+  }
   function filterCat(btn,cat){activeCat=cat;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
 
   function showPage(name){
