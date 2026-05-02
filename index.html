@@ -702,17 +702,24 @@
       const solCount = sols.length;
       const m = metooed[p.id];
       const solsHTML = sols.length > 0
-        ? sols.map((s,idx) => `
+        ? sols.map((s,idx) => {
+            const alreadyVoted = helpfulVoted[s.id];
+            const hCount = s.helpful_count || 0;
+            const helpfulLabel = hCount > 0
+              ? hCount+' '+(hCount===1?'person found':'people found')+' this helpful'
+              : 'Was this helpful?';
+            return `
             <div class="solution-item" id="sol-wrap-${s.id}">
               <div class="solution-num">${idx+1}</div>
               <div class="solution-body">
                 <div class="solution-box">"${s.text}"</div>
-                <button class="helpful-btn" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
+                <button class="helpful-btn ${alreadyVoted?'voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
                   <span class="helpful-icon">👍</span>
-                  <span class="helpful-text" id="helpful-text-${s.id}">${s.helpful_count > 0 ? s.helpful_count+' '+(s.helpful_count===1?'person found':'people found')+' this helpful' : 'Was this helpful?'}</span>
+                  <span class="helpful-text" id="helpful-text-${s.id}">${helpfulLabel}</span>
                 </button>
               </div>
-            </div>`).join('')
+            </div>`;
+          }).join('')
         : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`;
       return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*50}ms">
         <div class="card-top">
@@ -769,19 +776,35 @@
 
   async function markHelpful(solId, problemId) {
     if (helpfulVoted[solId]) { showToast('You already marked this as helpful!'); return; }
+
+    // Immediately disable button to prevent double clicks
+    const btn = document.getElementById('helpful-'+solId);
+    if (btn) btn.classList.add('voted');
+
+    // First fetch current count directly from DB to avoid stale data
+    const { data: fresh } = await db.from('solutions').select('helpful_count').eq('id', solId).single();
+    const currentCount = (fresh?.helpful_count || 0);
+    const newCount = currentCount + 1;
+
+    // Save vote to localStorage
     helpfulVoted[solId] = true;
     localStorage.setItem('sp_helpful', JSON.stringify(helpfulVoted));
+
+    // Update DB with correct count
+    await db.from('solutions').update({ helpful_count: newCount }).eq('id', solId);
+
+    // Update local data
     const p = allProblems.find(x => x.id===problemId);
-    if (!p || !p.solutions) return;
-    const sol = p.solutions.find(s => s.id===solId);
-    if (!sol) return;
-    sol.helpful_count = (sol.helpful_count||0)+1;
+    if (p && p.solutions) {
+      const sol = p.solutions.find(s => s.id===solId);
+      if (sol) sol.helpful_count = newCount;
+    }
+
+    // Update UI
     const textEl = document.getElementById('helpful-text-'+solId);
-    const btn = document.getElementById('helpful-'+solId);
-    if (textEl) textEl.textContent = sol.helpful_count+' '+(sol.helpful_count===1?'person found':'people found')+' this helpful';
-    if (btn) btn.classList.add('voted');
-    await db.from('solutions').update({ helpful_count: sol.helpful_count }).eq('id', solId);
-    showToast('👍 Marked as helpful!');
+    if (textEl) textEl.textContent = newCount+' '+(newCount===1?'person found':'people found')+' this helpful';
+
+    showToast('👍 Marked as helpful! Thank you.');
   }
 
   function doSearch() {
