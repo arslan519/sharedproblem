@@ -7,6 +7,7 @@
   <meta name="description" content="Type any problem. Find out how many others share it — and what actually worked for them.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --orange: #fb923c;
@@ -19,680 +20,131 @@
       --muted: rgba(255,255,255,0.4);
       --green: #4ade80;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Lora', Georgia, serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* Scrollbar */
+    body { background: var(--bg); color: var(--text); font-family: 'Lora', Georgia, serif; min-height: 100vh; overflow-x: hidden; }
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--orange-border); border-radius: 3px; }
-
-    /* Background effects */
-    .bg-orb {
-      position: fixed;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .bg-orb-1 {
-      width: 700px; height: 700px;
-      top: -200px; left: -150px;
-      background: radial-gradient(circle, rgba(251,146,60,0.06) 0%, transparent 65%);
-    }
-    .bg-orb-2 {
-      width: 500px; height: 500px;
-      bottom: -100px; right: -100px;
-      background: radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 65%);
-    }
-    .bg-grid {
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Layout */
-    .wrapper {
-      max-width: 740px;
-      margin: 0 auto;
-      padding: 0 24px 100px;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Animations */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    @keyframes pulse-dot {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50%       { transform: scale(1.4); opacity: 0.6; }
-    }
-    @keyframes shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-    @keyframes countUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .fade-up { animation: fadeUp 0.6s ease both; }
-    .d1 { animation-delay: 0.05s; }
-    .d2 { animation-delay: 0.12s; }
-    .d3 { animation-delay: 0.20s; }
-    .d4 { animation-delay: 0.28s; }
-    .d5 { animation-delay: 0.36s; }
-
-    /* Nav */
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 28px 0 0;
-      animation: fadeIn 0.5s ease both;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-    .logo-icon {
-      width: 36px; height: 36px;
-      background: linear-gradient(135deg, #fb923c, #ea580c);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      box-shadow: 0 4px 20px rgba(251,146,60,0.3);
-    }
-    .logo-text {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: -0.3px;
-    }
-    .live-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(74,222,128,0.07);
-      border: 1px solid rgba(74,222,128,0.15);
-      border-radius: 100px;
-      padding: 6px 14px;
-    }
-    .live-dot {
-      width: 7px; height: 7px;
-      background: var(--green);
-      border-radius: 50%;
-      box-shadow: 0 0 8px rgba(74,222,128,0.7);
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-    .live-text {
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.45);
-    }
-    .live-num {
-      color: var(--green);
-      font-weight: 500;
-    }
-
-    /* Hero */
-    .hero {
-      text-align: center;
-      padding: 64px 0 52px;
-    }
-    .hero-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--orange-dim);
-      border: 1px solid var(--orange-border);
-      border-radius: 100px;
-      padding: 7px 18px;
-      margin-bottom: 32px;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: var(--orange);
-      letter-spacing: 0.5px;
-    }
-    .hero h1 {
-      font-size: clamp(38px, 8vw, 62px);
-      font-weight: 600;
-      line-height: 1.12;
-      letter-spacing: -2px;
-      margin-bottom: 22px;
-      background: linear-gradient(180deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero h1 em {
-      font-style: italic;
-      background: linear-gradient(135deg, #fb923c, #fbbf24);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-sub {
-      font-size: 17px;
-      color: var(--muted);
-      max-width: 400px;
-      margin: 0 auto;
-      line-height: 1.7;
-      font-weight: 400;
-    }
-
-    /* Search */
-    .search-wrap {
-      margin-bottom: 14px;
-    }
-    .search-result {
-      display: none;
-      align-items: center;
-      gap: 16px;
-      background: rgba(251,146,60,0.08);
-      border: 1px solid var(--orange-border);
-      border-radius: 16px;
-      padding: 18px 22px;
-      margin-bottom: 14px;
-      animation: countUp 0.4s ease;
-    }
-    .search-result.show { display: flex; }
-    .result-emoji { font-size: 32px; }
-    .result-count {
-      font-size: 26px;
-      font-weight: 700;
-      font-family: 'DM Mono', monospace;
-      color: var(--orange);
-    }
-    .result-label {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 3px;
-    }
-    .search-box {
-      display: flex;
-      gap: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
-      padding: 7px 7px 7px 22px;
-      transition: border-color 0.2s;
-    }
-    .search-box:focus-within {
-      border-color: var(--orange-border);
-      background: rgba(251,146,60,0.04);
-    }
-    .search-input {
-      flex: 1;
-      background: none;
-      border: none;
-      outline: none;
-      font-size: 15px;
-      color: var(--text);
-      font-family: 'Lora', serif;
-      padding: 10px 0;
-    }
-    .search-input::placeholder { color: rgba(255,255,255,0.25); }
-    .search-btn {
-      background: linear-gradient(135deg, #fb923c, #ea580c);
-      border: none;
-      border-radius: 12px;
-      padding: 13px 24px;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'DM Mono', monospace;
-      cursor: pointer;
-      white-space: nowrap;
-      letter-spacing: 0.3px;
-      box-shadow: 0 4px 16px rgba(251,146,60,0.3);
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .search-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(251,146,60,0.4);
-    }
-    .search-btn:active { transform: translateY(0); }
-
-    /* Trending pills */
-    .trending {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 44px;
-    }
-    .trending-label {
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-right: 4px;
-    }
-    .trend-pill {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .trend-pill:hover {
-      border-color: var(--orange-border);
-      color: var(--orange);
-      background: var(--orange-dim);
-    }
-
-    /* Categories */
-    .cats {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-    .cat-btn {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      padding: 8px 18px;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .cat-btn:hover, .cat-btn.active {
-      background: var(--orange-dim);
-      border-color: var(--orange-border);
-      color: var(--orange);
-    }
-
-    /* Section header */
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-    .section-label {
-      font-size: 11px;
-      letter-spacing: 1.8px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.25);
-      text-transform: uppercase;
-    }
-    .section-count {
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.2);
-    }
-
-    /* Problem cards */
-    .problems { display: flex; flex-direction: column; gap: 12px; }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 22px 24px;
-      cursor: pointer;
-      transition: all 0.25s;
-      animation: fadeUp 0.5s ease both;
-    }
-    .card:hover {
-      border-color: rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.04);
-      transform: translateY(-1px);
-    }
-    .card.expanded {
-      background: rgba(251,146,60,0.05);
-      border-color: var(--orange-border);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-    }
-    .card-body { flex: 1; }
-    .card-cat {
-      font-size: 10px;
-      font-family: 'DM Mono', monospace;
-      font-weight: 500;
-      letter-spacing: 1.8px;
-      color: var(--orange);
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .card-text {
-      font-size: 15px;
-      line-height: 1.6;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-    .card-meta {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .card-meta-item {
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.35);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .card-meta-dot { color: rgba(255,255,255,0.15); }
-
-    /* Me Too button */
-    .metoo-btn {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px;
-      padding: 12px 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      min-width: 76px;
-    }
-    .metoo-btn:hover {
-      background: var(--orange-dim);
-      border-color: var(--orange-border);
-    }
-    .metoo-btn.active {
-      background: var(--orange-dim);
-      border-color: rgba(251,146,60,0.5);
-    }
-    .metoo-icon { font-size: 22px; }
-    .metoo-count {
-      font-size: 17px;
-      font-weight: 700;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.6);
-      transition: color 0.2s;
-    }
-    .metoo-btn.active .metoo-count { color: var(--orange); }
-    .metoo-label {
-      font-size: 10px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.3);
-    }
-    .metoo-btn.active .metoo-label { color: var(--orange); }
-
-    /* Card expanded */
-    .card-expanded {
-      display: none;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255,255,255,0.07);
-      animation: fadeUp 0.3s ease;
-    }
-    .card.expanded .card-expanded { display: block; }
-
-    .solution-label {
-      font-size: 10px;
-      font-family: 'DM Mono', monospace;
-      letter-spacing: 1.8px;
-      color: var(--orange);
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-    .solution-box {
-      background: rgba(251,146,60,0.06);
-      border: 1px solid rgba(251,146,60,0.14);
-      border-radius: 12px;
-      padding: 16px 18px;
-      font-size: 14px;
-      line-height: 1.7;
-      color: rgba(255,255,255,0.72);
-      font-style: italic;
-      margin-bottom: 16px;
-    }
-    .solution-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .sol-btn {
-      border-radius: 10px;
-      padding: 9px 16px;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .sol-btn-green {
-      background: rgba(74,222,128,0.1);
-      border: 1px solid rgba(74,222,128,0.2);
-      color: #4ade80;
-    }
-    .sol-btn-green:hover { background: rgba(74,222,128,0.18); }
-    .sol-btn-ghost {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      color: var(--muted);
-    }
-    .sol-btn-ghost:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
-
-    /* Empty state */
-    .empty {
-      text-align: center;
-      padding: 64px 20px;
-      border: 1px dashed rgba(255,255,255,0.08);
-      border-radius: 18px;
-    }
-    .empty-icon { font-size: 40px; margin-bottom: 16px; }
-    .empty-text { color: var(--muted); font-size: 15px; line-height: 1.7; }
-    .empty-link { color: var(--orange); cursor: pointer; }
-
-    /* Submit CTA */
-    .cta {
-      margin-top: 52px;
-      text-align: center;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 48px 28px;
-      position: relative;
-      overflow: hidden;
-    }
-    .cta::before {
-      content: '';
-      position: absolute;
-      top: -60px; left: 50%; transform: translateX(-50%);
-      width: 300px; height: 300px;
-      background: radial-gradient(circle, rgba(251,146,60,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .cta-tag {
-      display: inline-block;
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--orange);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .cta h2 {
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
-    }
-    .cta p {
-      font-size: 15px;
-      color: var(--muted);
-      line-height: 1.7;
-      max-width: 380px;
-      margin: 0 auto 28px;
-    }
-    .cta-btn {
-      background: linear-gradient(135deg, #fb923c, #ea580c);
-      border: none;
-      border-radius: 14px;
-      padding: 16px 36px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: 'DM Mono', monospace;
-      cursor: pointer;
-      letter-spacing: 0.3px;
-      box-shadow: 0 4px 24px rgba(251,146,60,0.35);
-      transition: all 0.2s;
-    }
-    .cta-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(251,146,60,0.45);
-    }
-
-    /* Submit modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      animation: fadeIn 0.2s ease;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal {
-      background: #161618;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 24px;
-      padding: 36px;
-      width: 100%;
-      max-width: 500px;
-      animation: fadeUp 0.3s ease;
-    }
-    .modal h3 {
-      font-size: 22px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .modal-sub {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 28px;
-      line-height: 1.6;
-    }
-    .modal label {
-      display: block;
-      font-size: 11px;
-      font-family: 'DM Mono', monospace;
-      color: var(--muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-    .modal textarea, .modal select {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      color: var(--text);
-      font-family: 'Lora', serif;
-      font-size: 14px;
-      outline: none;
-      margin-bottom: 20px;
-      resize: vertical;
-      transition: border-color 0.2s;
-    }
-    .modal textarea:focus, .modal select:focus {
-      border-color: var(--orange-border);
-    }
-    .modal textarea { min-height: 100px; }
-    .modal select option { background: #161618; }
-    .modal-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-    .modal-cancel {
-      background: none;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 22px;
-      color: var(--muted);
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .modal-submit {
-      background: linear-gradient(135deg, #fb923c, #ea580c);
-      border: none;
-      border-radius: 10px;
-      padding: 12px 22px;
-      color: #fff;
-      font-family: 'DM Mono', monospace;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 40px 0 20px;
-      font-size: 12px;
-      font-family: 'DM Mono', monospace;
-      color: rgba(255,255,255,0.2);
-    }
-    footer span { color: var(--orange); }
-
-    @media (max-width: 480px) {
-      .search-box { padding: 6px 6px 6px 16px; }
-      .search-btn { padding: 12px 16px; font-size: 13px; }
-      .card { padding: 18px; }
-      .metoo-btn { min-width: 66px; padding: 10px 12px; }
+    .bg-orb { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; }
+    .bg-orb-1 { width:700px; height:700px; top:-200px; left:-150px; background:radial-gradient(circle,rgba(251,146,60,0.06) 0%,transparent 65%); }
+    .bg-orb-2 { width:500px; height:500px; bottom:-100px; right:-100px; background:radial-gradient(circle,rgba(139,92,246,0.05) 0%,transparent 65%); }
+    .bg-grid { position:fixed; inset:0; background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+    .wrapper { max-width:740px; margin:0 auto; padding:0 24px 100px; position:relative; z-index:1; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    @keyframes pulse-dot { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:0.6} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    .fade-up { animation:fadeUp 0.6s ease both; }
+    .d1{animation-delay:0.05s} .d2{animation-delay:0.12s} .d3{animation-delay:0.20s} .d4{animation-delay:0.28s} .d5{animation-delay:0.36s}
+    nav { display:flex; justify-content:space-between; align-items:center; padding:28px 0 0; animation:fadeIn 0.5s ease both; }
+    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,#fb923c,#ea580c); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 4px 20px rgba(251,146,60,0.3); }
+    .logo-text { font-size:17px; font-weight:600; color:var(--text); letter-spacing:-0.3px; }
+    .live-badge { display:flex; align-items:center; gap:8px; background:rgba(74,222,128,0.07); border:1px solid rgba(74,222,128,0.15); border-radius:100px; padding:6px 14px; }
+    .live-dot { width:7px; height:7px; background:var(--green); border-radius:50%; box-shadow:0 0 8px rgba(74,222,128,0.7); animation:pulse-dot 2s ease-in-out infinite; }
+    .live-text { font-size:12px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.45); }
+    .live-num { color:var(--green); font-weight:500; }
+    .hero { text-align:center; padding:64px 0 52px; }
+    .hero-tag { display:inline-flex; align-items:center; gap:8px; background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:100px; padding:7px 18px; margin-bottom:32px; font-size:12px; font-family:'DM Mono',monospace; color:var(--orange); letter-spacing:0.5px; }
+    .hero h1 { font-size:clamp(38px,8vw,62px); font-weight:600; line-height:1.12; letter-spacing:-2px; margin-bottom:22px; background:linear-gradient(180deg,#ffffff 0%,rgba(255,255,255,0.55) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero h1 em { font-style:italic; background:linear-gradient(135deg,#fb923c,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero-sub { font-size:17px; color:var(--muted); max-width:400px; margin:0 auto; line-height:1.7; font-weight:400; }
+    .search-wrap { margin-bottom:14px; }
+    .search-result { display:none; align-items:center; gap:16px; background:rgba(251,146,60,0.08); border:1px solid var(--orange-border); border-radius:16px; padding:18px 22px; margin-bottom:14px; }
+    .search-result.show { display:flex; }
+    .result-emoji { font-size:32px; }
+    .result-count { font-size:26px; font-weight:700; font-family:'DM Mono',monospace; color:var(--orange); }
+    .result-label { font-size:13px; color:var(--muted); margin-top:3px; }
+    .search-box { display:flex; gap:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:18px; padding:7px 7px 7px 22px; transition:border-color 0.2s; }
+    .search-box:focus-within { border-color:var(--orange-border); background:rgba(251,146,60,0.04); }
+    .search-input { flex:1; background:none; border:none; outline:none; font-size:15px; color:var(--text); font-family:'Lora',serif; padding:10px 0; }
+    .search-input::placeholder { color:rgba(255,255,255,0.25); }
+    .search-btn { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:12px; padding:13px 24px; color:#fff; font-size:14px; font-weight:600; font-family:'DM Mono',monospace; cursor:pointer; white-space:nowrap; box-shadow:0 4px 16px rgba(251,146,60,0.3); transition:transform 0.15s,box-shadow 0.15s; }
+    .search-btn:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(251,146,60,0.4); }
+    .trending { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:44px; }
+    .trending-label { font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); display:flex; align-items:center; margin-right:4px; }
+    .trend-pill { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:6px 14px; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+    .trend-pill:hover { border-color:var(--orange-border); color:var(--orange); background:var(--orange-dim); }
+    .cats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+    .cat-btn { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:8px 18px; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); cursor:pointer; transition:all 0.2s; }
+    .cat-btn:hover,.cat-btn.active { background:var(--orange-dim); border-color:var(--orange-border); color:var(--orange); }
+    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+    .section-label { font-size:11px; letter-spacing:1.8px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.25); text-transform:uppercase; }
+    .section-count { font-size:11px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.2); }
+    .problems { display:flex; flex-direction:column; gap:12px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:22px 24px; cursor:pointer; transition:all 0.25s; animation:fadeUp 0.5s ease both; }
+    .card:hover { border-color:rgba(255,255,255,0.14); background:rgba(255,255,255,0.04); transform:translateY(-1px); }
+    .card.expanded { background:rgba(251,146,60,0.05); border-color:var(--orange-border); }
+    .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+    .card-body { flex:1; }
+    .card-cat { font-size:10px; font-family:'DM Mono',monospace; font-weight:500; letter-spacing:1.8px; color:var(--orange); text-transform:uppercase; margin-bottom:10px; }
+    .card-text { font-size:15px; line-height:1.6; color:var(--text); margin-bottom:14px; }
+    .card-meta { display:flex; align-items:center; gap:14px; }
+    .card-meta-item { font-size:12px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.35); }
+    .card-meta-dot { color:rgba(255,255,255,0.15); }
+    .metoo-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:12px 16px; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:76px; }
+    .metoo-btn:hover { background:var(--orange-dim); border-color:var(--orange-border); }
+    .metoo-btn.active { background:var(--orange-dim); border-color:rgba(251,146,60,0.5); }
+    .metoo-icon { font-size:22px; }
+    .metoo-count { font-size:17px; font-weight:700; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.6); transition:color 0.2s; }
+    .metoo-btn.active .metoo-count { color:var(--orange); }
+    .metoo-label { font-size:10px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.3); }
+    .metoo-btn.active .metoo-label { color:var(--orange); }
+    .card-expanded { display:none; margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.07); }
+    .card.expanded .card-expanded { display:block; animation:fadeUp 0.3s ease; }
+    .solution-label { font-size:10px; font-family:'DM Mono',monospace; letter-spacing:1.8px; color:var(--orange); text-transform:uppercase; margin-bottom:12px; }
+    .solution-box { background:rgba(251,146,60,0.06); border:1px solid rgba(251,146,60,0.14); border-radius:12px; padding:16px 18px; font-size:14px; line-height:1.7; color:rgba(255,255,255,0.72); font-style:italic; margin-bottom:16px; }
+    .solution-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .sol-btn { border-radius:10px; padding:9px 16px; font-size:12px; font-family:'DM Mono',monospace; cursor:pointer; transition:all 0.2s; }
+    .sol-btn-green { background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.2); color:#4ade80; }
+    .sol-btn-ghost { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted); }
+    .sol-btn-ghost:hover { border-color:rgba(255,255,255,0.18); color:var(--text); }
+    .loading { text-align:center; padding:48px 20px; }
+    .spinner { width:32px; height:32px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+    .loading-text { font-size:13px; font-family:'DM Mono',monospace; color:var(--muted); }
+    .empty { text-align:center; padding:64px 20px; border:1px dashed rgba(255,255,255,0.08); border-radius:18px; }
+    .empty-icon { font-size:40px; margin-bottom:16px; }
+    .empty-text { color:var(--muted); font-size:15px; line-height:1.7; }
+    .empty-link { color:var(--orange); cursor:pointer; }
+    .cta { margin-top:52px; text-align:center; background:var(--surface); border:1px solid var(--border); border-radius:24px; padding:48px 28px; position:relative; overflow:hidden; }
+    .cta::before { content:''; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:300px; height:300px; background:radial-gradient(circle,rgba(251,146,60,0.08) 0%,transparent 70%); pointer-events:none; }
+    .cta-tag { display:inline-block; font-size:11px; font-family:'DM Mono',monospace; color:var(--orange); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+    .cta h2 { font-size:26px; font-weight:600; margin-bottom:12px; letter-spacing:-0.5px; }
+    .cta p { font-size:15px; color:var(--muted); line-height:1.7; max-width:380px; margin:0 auto 28px; }
+    .cta-btn { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:14px; padding:16px 36px; color:#fff; font-size:15px; font-weight:600; font-family:'DM Mono',monospace; cursor:pointer; box-shadow:0 4px 24px rgba(251,146,60,0.35); transition:all 0.2s; }
+    .cta-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(251,146,60,0.45); }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); z-index:100; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
+    .modal { background:#161618; border:1px solid rgba(255,255,255,0.1); border-radius:24px; padding:36px; width:100%; max-width:500px; animation:fadeUp 0.3s ease; }
+    .modal h3 { font-size:22px; font-weight:600; margin-bottom:8px; }
+    .modal-sub { font-size:14px; color:var(--muted); margin-bottom:28px; line-height:1.6; }
+    .modal label { display:block; font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+    .modal textarea,.modal select { width:100%; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:12px; padding:14px 16px; color:var(--text); font-family:'Lora',serif; font-size:14px; outline:none; margin-bottom:20px; resize:vertical; transition:border-color 0.2s; }
+    .modal textarea:focus,.modal select:focus { border-color:var(--orange-border); }
+    .modal textarea { min-height:100px; }
+    .modal select option { background:#161618; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+    .modal-cancel { background:none; border:1px solid var(--border); border-radius:10px; padding:12px 22px; color:var(--muted); font-family:'DM Mono',monospace; font-size:13px; cursor:pointer; }
+    .modal-submit { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:10px; padding:12px 22px; color:#fff; font-family:'DM Mono',monospace; font-size:13px; font-weight:600; cursor:pointer; }
+    .modal-submit:disabled { opacity:0.5; cursor:not-allowed; }
+    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#1a1a1c; border:1px solid var(--orange-border); border-radius:12px; padding:14px 24px; font-size:13px; font-family:'DM Mono',monospace; color:var(--text); z-index:200; display:none; white-space:nowrap; }
+    .toast.show { display:block; animation:fadeUp 0.3s ease; }
+    footer { text-align:center; padding:40px 0 20px; font-size:12px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.2); }
+    footer span { color:var(--orange); }
+    @media(max-width:480px) {
+      .search-box { padding:6px 6px 6px 16px; }
+      .search-btn { padding:12px 16px; font-size:13px; }
+      .card { padding:18px; }
+      .metoo-btn { min-width:66px; padding:10px 12px; }
     }
   </style>
 </head>
 <body>
-
 <div class="bg-orb bg-orb-1"></div>
 <div class="bg-orb bg-orb-2"></div>
 <div class="bg-grid"></div>
-
 <div class="wrapper">
-
-  <!-- Nav -->
   <nav>
     <a class="logo" href="#">
       <div class="logo-icon">🤔</div>
@@ -700,18 +152,14 @@
     </a>
     <div class="live-badge">
       <div class="live-dot"></div>
-      <span class="live-text"><span class="live-num" id="liveCount">2,847</span> shared today</span>
+      <span class="live-text"><span class="live-num" id="liveCount">...</span> shared</span>
     </div>
   </nav>
-
-  <!-- Hero -->
   <div class="hero">
     <div class="hero-tag fade-up d1">✦ You are probably not alone</div>
     <h1 class="fade-up d2">Is it <em>just me,</em><br/>or does everyone<br/>deal with this?</h1>
     <p class="hero-sub fade-up d3">Type any problem. Find how many others share it — and what actually worked for them.</p>
   </div>
-
-  <!-- Search -->
   <div class="search-wrap fade-up d3">
     <div class="search-result" id="searchResult">
       <div class="result-emoji">🔥</div>
@@ -721,27 +169,17 @@
       </div>
     </div>
     <div class="search-box">
-      <input
-        class="search-input"
-        id="searchInput"
-        type="text"
-        placeholder="My landlord ignores every message I send..."
-        autocomplete="off"
-      />
+      <input class="search-input" id="searchInput" type="text" placeholder="My landlord ignores every message I send..." autocomplete="off"/>
       <button class="search-btn" onclick="doSearch()">Find Others →</button>
     </div>
   </div>
-
-  <!-- Trending -->
   <div class="trending fade-up d4">
     <span class="trending-label">↑ trending</span>
     <span class="trend-pill" onclick="fillSearch(this)">Zoom fatigue after calls</span>
-    <span class="trend-pill" onclick="fillSearch(this)">Can't afford groceries like before</span>
+    <span class="trend-pill" onclick="fillSearch(this)">Groceries too expensive</span>
     <span class="trend-pill" onclick="fillSearch(this)">Feel invisible at work</span>
-    <span class="trend-pill" onclick="fillSearch(this)">Can't fall asleep when exhausted</span>
+    <span class="trend-pill" onclick="fillSearch(this)">Cannot fall asleep</span>
   </div>
-
-  <!-- Categories -->
   <div class="cats fade-up d4">
     <button class="cat-btn active" onclick="filterCat(this,'All')">All</button>
     <button class="cat-btn" onclick="filterCat(this,'Work')">Work</button>
@@ -751,37 +189,27 @@
     <button class="cat-btn" onclick="filterCat(this,'Tech')">Tech</button>
     <button class="cat-btn" onclick="filterCat(this,'Relationships')">Relationships</button>
   </div>
-
-  <!-- Section header -->
   <div class="section-header fade-up d5">
     <span class="section-label" id="sectionLabel">Most Shared Right Now</span>
-    <span class="section-count" id="sectionCount">8 problems</span>
+    <span class="section-count" id="sectionCount"></span>
   </div>
-
-  <!-- Problems -->
-  <div class="problems" id="problemList"></div>
-
-  <!-- CTA -->
+  <div class="problems" id="problemList">
+    <div class="loading"><div class="spinner"></div><div class="loading-text">Loading problems...</div></div>
+  </div>
   <div class="cta fade-up">
     <span class="cta-tag">✦ Have a problem not listed?</span>
     <h2>Share yours anonymously</h2>
     <p>No account needed. Takes 30 seconds. You might help thousands of people tomorrow.</p>
     <button class="cta-btn" onclick="openModal()">Share a Problem →</button>
   </div>
-
-  <footer>
-    Made with ♥ · <span>sharedproblem.com</span> · Everyone has one
-  </footer>
-
+  <footer>Made with ♥ · <span>sharedproblem.com</span> · Everyone has one</footer>
 </div>
-
-<!-- Submit Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <h3>Share Your Problem</h3>
-    <p class="modal-sub">Anonymous by default. No account needed. Your problem might help thousands of people feel less alone.</p>
+    <p class="modal-sub">Anonymous by default. No account needed. Your problem might help thousands feel less alone.</p>
     <label>Describe your problem</label>
-    <textarea id="problemText" placeholder="Be as specific as you like. e.g. My manager takes credit for my work in meetings and I don't know how to address it..."></textarea>
+    <textarea id="problemText" placeholder="Be specific — e.g. My manager takes credit for my work in meetings..."></textarea>
     <label>Category</label>
     <select id="problemCat">
       <option value="Work">Work</option>
@@ -794,166 +222,170 @@
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-submit" onclick="submitProblem()">Submit Anonymously →</button>
+      <button class="modal-submit" id="submitBtn" onclick="submitProblem()">Submit Anonymously →</button>
     </div>
   </div>
 </div>
-
+<div class="toast" id="toast"></div>
 <script>
-  // --- Data ---
-  const problems = [
-    { id:1, cat:"Work", text:"My manager takes credit for my work in meetings and I never get recognition.", count:8921, sol:"Start emailing your manager a weekly summary of your work. Paper trail means they can't erase your contributions.", sols:31 },
-    { id:2, cat:"Work", text:"I feel exhausted after video calls even when nothing stressful happened.", count:12483, sol:"Turn off self-view during calls. Watching yourself constantly is neurologically draining. Most people see instant improvement.", sols:22 },
-    { id:3, cat:"Work", text:"I procrastinate even on things I actually want to do.", count:24871, sol:"The 2-minute rule — just commit to starting for 2 minutes. You almost always keep going once you've started.", sols:53 },
-    { id:4, cat:"Home", text:"My landlord ignores every maintenance request I send.", count:3247, sol:"Send everything via certified email and cc your local housing authority. Most landlords respond immediately once there's a paper trail.", sols:14 },
-    { id:5, cat:"Home", text:"My neighbor plays loud music late at night every weekend.", count:4109, sol:"Document 3 incidents with dates and times, then send a formal letter. Most people stop when it's in writing.", sols:18 },
-    { id:6, cat:"Health", text:"I can never fall asleep even when I'm completely exhausted.", count:19340, sol:"The military sleep method — relax your face muscles first, then shoulders, then breathe slowly. Takes about 2 minutes.", sols:47 },
-    { id:7, cat:"Money", text:"My bank charges fees I didn't know about and won't reverse them.", count:6234, sol:"Say the words 'I am considering closing my account.' Retention teams have authority to waive fees that front-line staff don't.", sols:11 },
-    { id:8, cat:"Tech", text:"My internet is slow only at certain times of the day.", count:5672, sol:"It's peak-hour congestion. Call your ISP and ask to be moved to a less congested node — they won't advertise this option.", sols:9 },
+  const SUPABASE_URL = 'https://odowphgmadyoadiztjmu.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kb3dwaGdtYWR5b2FkaXp0am11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzE0NDksImV4cCI6MjA5MzMwNzQ0OX0.E9reCzIFafIRA1zvGNCrJs2lOFPo8l46wmv3KupoNf0';
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const seedData = [
+    { text:"My manager takes credit for my work in meetings and I never get recognition.", category:"Work", metoo_count:8921, solution_count:31, sol:"Start emailing your manager a weekly summary of your work. Paper trail means they cannot erase your contributions." },
+    { text:"I feel exhausted after video calls even when nothing stressful happened.", category:"Work", metoo_count:12483, solution_count:22, sol:"Turn off self-view during calls. Watching yourself constantly is neurologically draining." },
+    { text:"I procrastinate even on things I actually want to do.", category:"Work", metoo_count:24871, solution_count:53, sol:"The 2-minute rule — just commit to starting for 2 minutes. You almost always keep going." },
+    { text:"My landlord ignores every maintenance request I send.", category:"Home", metoo_count:3247, solution_count:14, sol:"Send everything via certified email and cc your local housing authority. Most landlords respond immediately." },
+    { text:"My neighbor plays loud music late at night every weekend.", category:"Home", metoo_count:4109, solution_count:18, sol:"Document 3 incidents with dates and times, then send a formal letter. Most people stop when it is in writing." },
+    { text:"I can never fall asleep even when I am completely exhausted.", category:"Health", metoo_count:19340, solution_count:47, sol:"The military sleep method — relax your face muscles first, then shoulders, then breathe slowly. Takes 2 minutes." },
+    { text:"My bank charges fees I did not know about and will not reverse them.", category:"Money", metoo_count:6234, solution_count:11, sol:"Say the words: I am considering closing my account. Retention teams can waive fees that front-line staff cannot." },
+    { text:"My internet is slow only at certain times of the day.", category:"Tech", metoo_count:5672, solution_count:9, sol:"It is peak-hour congestion. Call your ISP and ask to be moved to a less congested node." },
   ];
 
-  let activeCat = "All";
-  let metooed = {};
-  let counts = {};
-  problems.forEach(p => counts[p.id] = p.count);
+  let allProblems = [];
+  let activeCat = 'All';
+  let metooed = JSON.parse(localStorage.getItem('sp_metooed') || '{}');
 
-  // --- Live counter ---
-  setInterval(() => {
-    const el = document.getElementById('liveCount');
-    let n = parseInt(el.textContent.replace(/,/g,'')) + Math.floor(Math.random()*3);
-    el.textContent = n.toLocaleString();
-  }, 3000);
+  async function init() {
+    await seedIfEmpty();
+    await loadProblems();
+  }
 
-  // --- Render ---
+  async function seedIfEmpty() {
+    const { data } = await db.from('problems').select('id').limit(1);
+    if (data && data.length > 0) return;
+    for (const p of seedData) {
+      const { data: ins } = await db.from('problems')
+        .insert({ text: p.text, category: p.category, metoo_count: p.metoo_count, solution_count: p.solution_count })
+        .select().single();
+      if (ins && p.sol) {
+        await db.from('solutions').insert({ problem_id: ins.id, text: p.sol, helpful_count: 0 });
+      }
+    }
+  }
+
+  async function loadProblems() {
+    const { data } = await db.from('problems')
+      .select('*, solutions(id,text,helpful_count)')
+      .order('metoo_count', { ascending: false });
+    allProblems = data || [];
+    const total = allProblems.reduce((s, p) => s + (p.metoo_count || 0), 0);
+    document.getElementById('liveCount').textContent = total.toLocaleString();
+    render();
+  }
+
   function render() {
     const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    const list = problems.filter(p =>
-      (activeCat === 'All' || p.cat === activeCat) &&
+    const list = allProblems.filter(p =>
+      (activeCat === 'All' || p.category === activeCat) &&
       (q === '' || p.text.toLowerCase().includes(q))
     );
-
     document.getElementById('sectionCount').textContent = list.length + ' problems';
     document.getElementById('sectionLabel').textContent = q ? 'Search Results' : 'Most Shared Right Now';
-
     const container = document.getElementById('problemList');
     if (list.length === 0) {
-      container.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🌱</div>
-          <div class="empty-text">No one has shared this yet.<br/>
-          <span class="empty-link" onclick="openModal()">Be the first to share it →</span></div>
-        </div>`;
+      container.innerHTML = `<div class="empty"><div class="empty-icon">🌱</div><div class="empty-text">No one has shared this yet.<br/><span class="empty-link" onclick="openModal()">Be the first →</span></div></div>`;
       return;
     }
-
-    container.innerHTML = list.map((p, i) => `
-      <div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*55}ms">
+    container.innerHTML = list.map((p, i) => {
+      const sol = p.solutions && p.solutions[0];
+      const m = metooed[p.id];
+      return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*55}ms">
         <div class="card-top">
           <div class="card-body">
-            <div class="card-cat">${p.cat}</div>
+            <div class="card-cat">${p.category}</div>
             <div class="card-text">${p.text}</div>
             <div class="card-meta">
-              <span class="card-meta-item">💬 ${p.sols} solutions</span>
+              <span class="card-meta-item">💬 ${p.solution_count||0} solutions</span>
               <span class="card-meta-dot">·</span>
               <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>
             </div>
           </div>
-          <button class="metoo-btn ${metooed[p.id]?'active':''}" id="btn-${p.id}"
-            onclick="event.stopPropagation(); doMeToo(${p.id})">
-            <span class="metoo-icon">${metooed[p.id]?'🔥':'👆'}</span>
-            <span class="metoo-count" id="count-${p.id}">${counts[p.id].toLocaleString()}</span>
-            <span class="metoo-label">${metooed[p.id]?'same!':'me too'}</span>
+          <button class="metoo-btn ${m?'active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
+            <span class="metoo-icon">${m?'🔥':'👆'}</span>
+            <span class="metoo-count" id="count-${p.id}">${(p.metoo_count||0).toLocaleString()}</span>
+            <span class="metoo-label">${m?'same!':'me too'}</span>
           </button>
         </div>
         <div class="card-expanded">
           <div class="solution-label">✦ Top Solution</div>
-          <div class="solution-box">"${p.sol}"</div>
-          <div class="solution-actions">
-            <button class="sol-btn sol-btn-green" onclick="event.stopPropagation()">👍 Worked for me</button>
-            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation(); openModal()">+ Add your solution</button>
-          </div>
+          ${sol
+            ? `<div class="solution-box">"${sol.text}"</div><div class="solution-actions"><button class="sol-btn sol-btn-green" onclick="event.stopPropagation()">👍 Worked for me</button><button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openModal()">+ Add solution</button></div>`
+            : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first!</div><div class="solution-actions"><button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openModal()">+ Add solution</button></div>`
+          }
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
-  // --- Toggle card ---
   function toggleCard(id) {
     const card = document.getElementById('card-'+id);
     const toggle = document.getElementById('toggle-'+id);
-    const expanded = card.classList.toggle('expanded');
-    toggle.textContent = expanded ? 'Hide ↑' : 'See solutions ↓';
+    toggle.textContent = card.classList.toggle('expanded') ? 'Hide ↑' : 'See solutions ↓';
   }
 
-  // --- Me Too ---
-  function doMeToo(id) {
-    if (metooed[id]) return;
+  async function doMeToo(id) {
+    if (metooed[id]) { showToast('You already said Me Too on this one!'); return; }
     metooed[id] = true;
-    counts[id]++;
+    localStorage.setItem('sp_metooed', JSON.stringify(metooed));
+    const p = allProblems.find(x => x.id === id);
+    if (!p) return;
+    p.metoo_count = (p.metoo_count||0) + 1;
     const btn = document.getElementById('btn-'+id);
-    const countEl = document.getElementById('count-'+id);
     btn.classList.add('active');
     btn.querySelector('.metoo-icon').textContent = '🔥';
     btn.querySelector('.metoo-label').textContent = 'same!';
-    countEl.textContent = counts[id].toLocaleString();
+    document.getElementById('count-'+id).textContent = p.metoo_count.toLocaleString();
+    const total = allProblems.reduce((s,x) => s+(x.metoo_count||0),0);
+    document.getElementById('liveCount').textContent = total.toLocaleString();
+    await db.from('problems').update({ metoo_count: p.metoo_count }).eq('id', id);
+    showToast('🔥 Me Too counted! You are not alone.');
   }
 
-  // --- Search ---
   function doSearch() {
     const q = document.getElementById('searchInput').value.trim();
     const result = document.getElementById('searchResult');
     if (!q) { result.classList.remove('show'); render(); return; }
-    const n = Math.floor(Math.random()*9000)+400;
-    document.getElementById('resultCount').textContent = n.toLocaleString() + ' people';
+    const matching = allProblems.filter(p => p.text.toLowerCase().includes(q.toLowerCase()));
+    const total = matching.reduce((s,p) => s+(p.metoo_count||0), 0);
+    document.getElementById('resultCount').textContent = (total||Math.floor(Math.random()*3000+200)).toLocaleString() + ' people';
     result.classList.add('show');
     render();
   }
 
-  document.getElementById('searchInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doSearch();
-  });
-  document.getElementById('searchInput').addEventListener('input', () => {
-    document.getElementById('searchResult').classList.remove('show');
-    render();
-  });
+  document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+  document.getElementById('searchInput').addEventListener('input', () => { document.getElementById('searchResult').classList.remove('show'); render(); });
+  function fillSearch(el) { document.getElementById('searchInput').value = el.textContent; doSearch(); }
+  function filterCat(btn, cat) { activeCat=cat; document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }
+  function openModal() { document.getElementById('modalOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
+  function closeModalOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
 
-  // --- Trending pills ---
-  function fillSearch(el) {
-    document.getElementById('searchInput').value = el.textContent;
-    doSearch();
-    document.getElementById('searchInput').focus();
-  }
-
-  // --- Category filter ---
-  function filterCat(btn, cat) {
-    activeCat = cat;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  }
-
-  // --- Modal ---
-  function openModal() {
-    document.getElementById('modalOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-  }
-  function closeModalOutside(e) {
-    if (e.target === document.getElementById('modalOverlay')) closeModal();
-  }
-  function submitProblem() {
+  async function submitProblem() {
     const text = document.getElementById('problemText').value.trim();
-    if (!text) { alert('Please describe your problem first.'); return; }
+    const category = document.getElementById('problemCat').value;
+    if (!text) { showToast('Please describe your problem first.'); return; }
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Submitting...';
+    const { data, error } = await db.from('problems').insert({ text, category, metoo_count:1, solution_count:0 }).select().single();
+    btn.disabled = false; btn.textContent = 'Submit Anonymously →';
+    if (error) { showToast('Something went wrong. Please try again.'); return; }
     closeModal();
     document.getElementById('problemText').value = '';
-    setTimeout(() => alert('✅ Your problem has been shared anonymously. Thank you for helping others feel less alone!'), 300);
+    allProblems.unshift(data);
+    render();
+    showToast('✅ Shared anonymously! Thank you for helping others feel less alone.');
   }
 
-  // --- Init ---
-  render();
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  init();
 </script>
 </body>
 </html>
