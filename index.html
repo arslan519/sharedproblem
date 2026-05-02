@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shared Problem — You Are Not Alone</title>
   <meta name="description" content="Type any problem. Find out how many others share it — and what actually worked for them.">
@@ -14,276 +14,290 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --orange: #fb923c;
-      --orange-dark: #ea580c;
-      --orange-dim: rgba(251,146,60,0.12);
-      --orange-border: rgba(251,146,60,0.28);
-      --bg: #0a0a0c;
-      --bg2: #111113;
-      --surface: rgba(255,255,255,0.03);
-      --surface2: rgba(255,255,255,0.05);
-      --border: rgba(255,255,255,0.07);
-      --border2: rgba(255,255,255,0.12);
-      --text: rgba(255,255,255,0.9);
-      --text2: rgba(255,255,255,0.65);
-      --muted: rgba(255,255,255,0.38);
-      --green: #4ade80;
-      --purple: #a78bfa;
+      --orange:#fb923c; --orange-dark:#ea580c; --orange-dim:rgba(251,146,60,0.12); --orange-border:rgba(251,146,60,0.28);
+      --bg:#0a0a0c; --bg2:#111113; --surface:rgba(255,255,255,0.03); --surface2:rgba(255,255,255,0.05);
+      --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.12);
+      --text:rgba(255,255,255,0.9); --text2:rgba(255,255,255,0.65); --muted:rgba(255,255,255,0.38);
+      --green:#4ade80; --purple:#a78bfa;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { background: var(--bg); color: var(--text); font-family: 'Lora', Georgia, serif; min-height: 100vh; overflow-x: hidden; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: rgba(251,146,60,0.25); border-radius: 2px; }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'Lora',Georgia,serif;min-height:100vh;overflow-x:hidden;}
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:rgba(251,146,60,0.25);border-radius:2px;}
 
     /* Background */
-    .bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .bg-noise { position: absolute; inset: -50%; width: 200%; height: 200%; opacity: 0.025;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); }
-    .bg-orb { position: absolute; border-radius: 50%; }
-    .bg-orb-1 { width:800px; height:800px; top:-300px; left:-200px; background:radial-gradient(circle,rgba(251,146,60,0.07) 0%,transparent 60%); }
-    .bg-orb-2 { width:600px; height:600px; bottom:-200px; right:-150px; background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 60%); }
-    .bg-orb-3 { width:400px; height:400px; top:50%; left:50%; transform:translate(-50%,-50%); background:radial-gradient(circle,rgba(251,146,60,0.03) 0%,transparent 60%); }
-    .bg-grid { position:absolute; inset:0;
-      background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);
-      background-size:72px 72px; }
+    .bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+    .bg-noise{position:absolute;inset:-50%;width:200%;height:200%;opacity:0.025;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");}
+    .bg-orb{position:absolute;border-radius:50%;}
+    .bg-orb-1{width:800px;height:800px;top:-300px;left:-200px;background:radial-gradient(circle,rgba(251,146,60,0.07) 0%,transparent 60%);}
+    .bg-orb-2{width:600px;height:600px;bottom:-200px;right:-150px;background:radial-gradient(circle,rgba(139,92,246,0.06) 0%,transparent 60%);}
+    .bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:72px 72px;}
 
     /* Pages */
-    .page { display: none; }
-    .page.active { display: block; }
-
-    .wrapper { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
+    .page{display:none;} .page.active{display:block;}
+    .wrapper{max-width:760px;margin:0 auto;padding:0 24px 80px;position:relative;z-index:1;}
 
     /* Animations */
-    @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(251,146,60,0.15)} 50%{box-shadow:0 0 40px rgba(251,146,60,0.3)} }
-    .fade-up { animation: fadeUp 0.6s ease both; }
-    .d1{animation-delay:.06s} .d2{animation-delay:.13s} .d3{animation-delay:.20s} .d4{animation-delay:.28s} .d5{animation-delay:.36s}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(251,146,60,0.15)}50%{box-shadow:0 0 40px rgba(251,146,60,0.3)}}
+    @keyframes popIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+    .fade-up{animation:fadeUp 0.6s ease both;}
+    .d1{animation-delay:.06s}.d2{animation-delay:.13s}.d3{animation-delay:.20s}.d4{animation-delay:.28s}.d5{animation-delay:.36s}
 
     /* Nav */
-    nav {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 26px 0;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0;
-      animation: fadeIn 0.5s ease both;
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(10,10,12,0.85);
-      backdrop-filter: blur(20px);
-    }
-    .nav-inner { max-width:760px; margin:0 auto; padding:0 24px; width:100%; display:flex; justify-content:space-between; align-items:center; }
-    .logo { display:flex; align-items:center; gap:10px; text-decoration:none; cursor:pointer; }
-    .logo-icon { width:34px; height:34px; background:linear-gradient(135deg,#fb923c,#ea580c); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; box-shadow:0 4px 16px rgba(251,146,60,0.35); }
-    .logo-text { font-size:16px; font-weight:600; color:var(--text); letter-spacing:-0.2px; }
-    .nav-links { display:flex; align-items:center; gap:6px; }
-    .nav-link { background:none; border:none; padding:7px 14px; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); cursor:pointer; border-radius:8px; transition:all 0.2s; letter-spacing:0.3px; }
-    .nav-link:hover { color:var(--text2); background:var(--surface2); }
-    .nav-link.active-nav { color:var(--orange); }
-    .live-badge { display:flex; align-items:center; gap:7px; background:rgba(74,222,128,0.06); border:1px solid rgba(74,222,128,0.14); border-radius:100px; padding:5px 13px; }
-    .live-dot { width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 8px rgba(74,222,128,0.8); animation:pulse-dot 2.5s ease-in-out infinite; }
-    .live-text { font-size:11px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.4); }
-    .live-num { color:var(--green); font-weight:500; }
+    nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:rgba(10,10,12,0.88);backdrop-filter:blur(20px);animation:fadeIn 0.5s ease both;}
+    .nav-inner{max-width:760px;margin:0 auto;padding:0 24px;width:100%;display:flex;justify-content:space-between;align-items:center;}
+    .logo-text{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.2px;cursor:pointer;}
+    .nav-links{display:flex;align-items:center;gap:4px;}
+    .nav-link{background:none;border:none;padding:7px 13px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;border-radius:8px;transition:all 0.2s;letter-spacing:0.3px;}
+    .nav-link:hover{color:var(--text2);background:var(--surface2);}
+    .nav-link.active-nav{color:var(--orange);}
+    .nav-right{display:flex;align-items:center;gap:10px;}
+    .live-badge{display:flex;align-items:center;gap:7px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.14);border-radius:100px;padding:5px 13px;}
+    .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 8px rgba(74,222,128,0.8);animation:pulse-dot 2.5s ease-in-out infinite;}
+    .live-text{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.4);}
+    .live-num{color:var(--green);font-weight:500;}
 
-    /* ========== HOME PAGE ========== */
-    .hero { text-align:center; padding:72px 0 56px; }
-    .hero-tag { display:inline-flex; align-items:center; gap:8px; background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:100px; padding:7px 18px; margin-bottom:32px; font-size:11px; font-family:'DM Mono',monospace; color:var(--orange); letter-spacing:0.8px; text-transform:uppercase; }
-    .hero h1 { font-size:clamp(40px,8vw,66px); font-weight:600; line-height:1.1; letter-spacing:-2.5px; margin-bottom:24px; }
-    .hero h1 .white { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.5) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .hero h1 em { font-style:italic; background:linear-gradient(135deg,#fb923c 0%,#fbbf24 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .hero-sub { font-size:17px; color:var(--muted); max-width:420px; margin:0 auto; line-height:1.75; font-weight:400; }
+    /* Profile pill in nav */
+    .nav-profile{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:100px;padding:5px 12px 5px 6px;cursor:pointer;transition:all 0.2s;}
+    .nav-profile:hover{border-color:var(--orange-border);background:var(--orange-dim);}
+    .nav-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;font-size:16px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border2);}
+    .nav-avatar img{width:26px;height:26px;border-radius:50%;object-fit:cover;}
+    .nav-name{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* Welcome modal */
+    .welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .welcome-overlay.hidden{display:none;}
+    .welcome-modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;width:100%;max-width:440px;animation:popIn 0.4s ease;text-align:center;}
+    .welcome-emoji{font-size:52px;margin-bottom:20px;display:block;}
+    .welcome-modal h2{font-size:24px;font-weight:600;margin-bottom:10px;letter-spacing:-0.5px;}
+    .welcome-modal p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:32px;}
+    .avatar-picker{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-bottom:24px;}
+    .avatar-opt{width:52px;height:52px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;}
+    .avatar-opt:hover{border-color:var(--orange-border);transform:scale(1.1);}
+    .avatar-opt.selected{border-color:var(--orange);background:var(--orange-dim);box-shadow:0 0 12px rgba(251,146,60,0.3);}
+    .avatar-upload-wrap{position:relative;}
+    .avatar-upload-btn{width:52px;height:52px;border-radius:50%;border:2px dashed var(--border);background:var(--surface);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;overflow:hidden;}
+    .avatar-upload-btn:hover{border-color:var(--orange-border);}
+    .avatar-upload-btn img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+    #avatarFileInput{display:none;}
+    .welcome-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'Lora',serif;font-size:15px;outline:none;margin-bottom:20px;text-align:center;transition:border-color 0.2s;}
+    .welcome-input:focus{border-color:var(--orange-border);}
+    .welcome-input::placeholder{color:rgba(255,255,255,0.2);}
+    .welcome-skip{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;margin-top:12px;display:block;transition:color 0.2s;}
+    .welcome-skip:hover{color:var(--text2);}
+    .welcome-btn{width:100%;background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 4px 20px rgba(251,146,60,0.35);transition:all 0.2s;}
+    .welcome-btn:hover{box-shadow:0 6px 28px rgba(251,146,60,0.5);}
+
+    /* Profile edit modal */
+    .profile-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);z-index:150;display:none;align-items:center;justify-content:center;padding:20px;}
+    .profile-overlay.open{display:flex;}
+    .profile-modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:36px;width:100%;max-width:400px;animation:popIn 0.3s ease;text-align:center;}
+    .profile-modal h3{font-size:20px;font-weight:600;margin-bottom:24px;}
+    .profile-avatar-big{width:80px;height:80px;border-radius:50%;border:2px solid var(--orange-border);font-size:44px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;background:var(--surface2);overflow:hidden;cursor:pointer;position:relative;}
+    .profile-avatar-big img{width:100%;height:100%;object-fit:cover;}
+    .profile-avatar-big .edit-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.5);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;font-size:18px;}
+    .profile-avatar-big:hover .edit-overlay{opacity:1;}
+    #profileFileInput{display:none;}
+
+    /* Author chip on cards */
+    .author-chip{display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;}
+    .author-avatar-sm{width:22px;height:22px;border-radius:50%;font-size:13px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
+    .author-avatar-sm img{width:100%;height:100%;object-fit:cover;}
+    .author-name-sm{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
+    .author-dot{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.15);}
+
+    /* Solution author */
+    .sol-author{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+    .sol-author-avatar{width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
+    .sol-author-avatar img{width:100%;height:100%;object-fit:cover;}
+    .sol-author-name{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
+
+    /* Hero */
+    .hero{text-align:center;padding:64px 0 48px;}
+    .hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:100px;padding:7px 18px;margin-bottom:28px;font-size:11px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:0.8px;text-transform:uppercase;}
+    .hero h1{font-size:clamp(38px,8vw,62px);font-weight:600;line-height:1.1;letter-spacing:-2px;margin-bottom:20px;}
+    .hero h1 .white{background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.5) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hero h1 em{font-style:italic;background:linear-gradient(135deg,#fb923c 0%,#fbbf24 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hero-sub{font-size:16px;color:var(--muted);max-width:400px;margin:0 auto;line-height:1.75;}
 
     /* Stats bar */
-    .stats-bar { display:flex; justify-content:center; gap:0; margin:40px 0 52px; }
-    .stat-item { text-align:center; padding:20px 40px; border:1px solid var(--border); background:var(--surface); }
-    .stat-item:first-child { border-radius:14px 0 0 14px; }
-    .stat-item:last-child { border-radius:0 14px 14px 0; border-left:none; }
-    .stat-item:not(:first-child):not(:last-child) { border-left:none; }
-    .stat-num { font-size:24px; font-weight:600; font-family:'DM Mono',monospace; color:var(--orange); }
-    .stat-label { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:4px; letter-spacing:0.5px; }
+    .stats-bar{display:flex;justify-content:center;margin:36px 0 48px;}
+    .stat-item{text-align:center;padding:18px 36px;border:1px solid var(--border);background:var(--surface);}
+    .stat-item:first-child{border-radius:14px 0 0 14px;}
+    .stat-item:last-child{border-radius:0 14px 14px 0;}
+    .stat-item:not(:first-child){border-left:none;}
+    .stat-num{font-size:22px;font-weight:600;font-family:'DM Mono',monospace;color:var(--orange);}
+    .stat-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:4px;letter-spacing:0.5px;}
 
     /* Search */
-    .search-wrap { margin-bottom:16px; }
-    .search-result { display:none; align-items:center; gap:16px; background:rgba(251,146,60,0.07); border:1px solid var(--orange-border); border-radius:16px; padding:18px 22px; margin-bottom:14px; }
-    .search-result.show { display:flex; animation:fadeUp 0.35s ease; }
-    .result-emoji { font-size:30px; }
-    .result-count { font-size:24px; font-weight:700; font-family:'DM Mono',monospace; color:var(--orange); }
-    .result-label { font-size:13px; color:var(--muted); margin-top:3px; }
-    .search-box { display:flex; gap:10px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.09); border-radius:18px; padding:7px 7px 7px 22px; transition:all 0.25s; }
-    .search-box:focus-within { border-color:var(--orange-border); background:rgba(251,146,60,0.04); box-shadow:0 0 0 3px rgba(251,146,60,0.06); }
-    .search-input { flex:1; background:none; border:none; outline:none; font-size:15px; color:var(--text); font-family:'Lora',serif; padding:11px 0; }
-    .search-input::placeholder { color:rgba(255,255,255,0.2); }
-    .search-btn { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:12px; padding:13px 26px; color:#fff; font-size:13px; font-weight:600; font-family:'DM Mono',monospace; cursor:pointer; white-space:nowrap; box-shadow:0 4px 20px rgba(251,146,60,0.35); transition:all 0.2s; letter-spacing:0.3px; }
-    .search-btn:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(251,146,60,0.45); }
-    .search-btn:active { transform:translateY(0); }
+    .search-wrap{margin-bottom:14px;}
+    .search-result{display:none;align-items:center;gap:16px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:16px;padding:16px 20px;margin-bottom:12px;}
+    .search-result.show{display:flex;animation:fadeUp 0.35s ease;}
+    .result-emoji{font-size:28px;}
+    .result-count{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:var(--orange);}
+    .result-label{font-size:13px;color:var(--muted);margin-top:2px;}
+    .search-box{display:flex;gap:10px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.09);border-radius:18px;padding:7px 7px 7px 20px;transition:all 0.25s;}
+    .search-box:focus-within{border-color:var(--orange-border);background:rgba(251,146,60,0.04);box-shadow:0 0 0 3px rgba(251,146,60,0.06);}
+    .search-input{flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--text);font-family:'Lora',serif;padding:10px 0;}
+    .search-input::placeholder{color:rgba(255,255,255,0.2);}
+    .search-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:12px;padding:12px 22px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;box-shadow:0 4px 16px rgba(251,146,60,0.3);transition:all 0.2s;}
+    .search-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(251,146,60,0.4);}
 
     /* Trending */
-    .trending { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:48px; }
-    .trending-label { font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:1px; margin-right:4px; text-transform:uppercase; }
-    .trend-pill { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:6px 14px; font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); cursor:pointer; transition:all 0.2s; white-space:nowrap; }
-    .trend-pill:hover { border-color:var(--orange-border); color:var(--orange); background:var(--orange-dim); }
+    .trending{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:44px;}
+    .trending-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:1px;margin-right:4px;text-transform:uppercase;}
+    .trend-pill{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:5px 13px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+    .trend-pill:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
 
     /* Divider */
-    .divider { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
-    .divider-line { flex:1; height:1px; background:var(--border); }
-    .divider-text { font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; white-space:nowrap; }
+    .divider{display:flex;align-items:center;gap:16px;margin-bottom:18px;}
+    .divider-line{flex:1;height:1px;background:var(--border);}
+    .divider-text{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;}
 
     /* Cats */
-    .cats { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:22px; }
-    .cat-btn { background:var(--surface); border:1px solid var(--border); border-radius:100px; padding:7px 16px; font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); cursor:pointer; transition:all 0.2s; letter-spacing:0.3px; }
-    .cat-btn:hover,.cat-btn.active { background:var(--orange-dim); border-color:var(--orange-border); color:var(--orange); }
-
-    .section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-    .section-label { font-size:10px; letter-spacing:2px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.22); text-transform:uppercase; }
-    .section-count { font-size:10px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.18); }
+    .cats{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;}
+    .cat-btn{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:7px 15px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.2s;}
+    .cat-btn:hover,.cat-btn.active{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
+    .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;}
+    .section-label{font-size:10px;letter-spacing:2px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.22);text-transform:uppercase;}
+    .section-count{font-size:10px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.18);}
 
     /* Cards */
-    .problems { display:flex; flex-direction:column; gap:10px; }
-    .card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:22px 24px; cursor:pointer; transition:all 0.22s; animation:fadeUp 0.5s ease both; position:relative; overflow:hidden; }
-    .card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(251,146,60,0.02) 0%,transparent 60%); opacity:0; transition:opacity 0.3s; pointer-events:none; }
-    .card:hover { border-color:var(--border2); background:var(--surface2); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
-    .card:hover::before { opacity:1; }
-    .card.expanded { background:rgba(251,146,60,0.04); border-color:var(--orange-border); box-shadow:0 8px 32px rgba(251,146,60,0.08); }
-    .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
-    .card-body { flex:1; }
-    .card-cat { font-size:9px; font-family:'DM Mono',monospace; font-weight:500; letter-spacing:2px; color:var(--orange); text-transform:uppercase; margin-bottom:10px; }
-    .card-text { font-size:15px; line-height:1.62; color:var(--text); margin-bottom:14px; }
-    .card-meta { display:flex; align-items:center; gap:12px; }
-    .card-meta-item { font-size:11px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.3); }
-    .card-meta-dot { color:rgba(255,255,255,0.12); }
-    .metoo-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); border-radius:13px; padding:12px 14px; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:74px; flex-shrink:0; }
-    .metoo-btn:hover { background:var(--orange-dim); border-color:var(--orange-border); transform:scale(1.04); }
-    .metoo-btn.active { background:var(--orange-dim); border-color:rgba(251,146,60,0.45); animation:glow 2s ease-in-out infinite; }
-    .metoo-icon { font-size:20px; }
-    .metoo-count { font-size:16px; font-weight:700; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.55); transition:all 0.2s; }
-    .metoo-btn.active .metoo-count { color:var(--orange); }
-    .metoo-label { font-size:9px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.25); letter-spacing:0.5px; }
-    .metoo-btn.active .metoo-label { color:var(--orange); }
-    .card-expanded { display:none; margin-top:18px; padding-top:18px; border-top:1px solid rgba(255,255,255,0.06); }
-    .card.expanded .card-expanded { display:block; animation:fadeUp 0.3s ease; }
-    .solution-label { font-size:9px; font-family:'DM Mono',monospace; letter-spacing:2px; color:var(--orange); text-transform:uppercase; margin-bottom:12px; }
-    .solution-box { background:rgba(251,146,60,0.05); border:1px solid rgba(251,146,60,0.12); border-left:3px solid rgba(251,146,60,0.4); border-radius:0 10px 10px 0; padding:14px 16px; font-size:14px; line-height:1.7; color:rgba(255,255,255,0.7); font-style:italic; margin-bottom:14px; }
-    .solution-actions { display:flex; gap:8px; flex-wrap:wrap; }
-    .sol-btn { border-radius:9px; padding:8px 15px; font-size:11px; font-family:'DM Mono',monospace; cursor:pointer; transition:all 0.2s; letter-spacing:0.3px; }
-    .sol-btn-green { background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.18); color:#4ade80; }
-    .sol-btn-green:hover { background:rgba(74,222,128,0.15); }
-    .sol-btn-ghost { background:rgba(255,255,255,0.03); border:1px solid var(--border); color:var(--muted); }
-    .sol-btn-ghost:hover { border-color:var(--border2); color:var(--text2); }
-    .solution-item { display:flex; gap:14px; align-items:flex-start; margin-bottom:14px; }
-    .solution-num { width:22px; height:22px; min-width:22px; background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-family:'DM Mono',monospace; color:var(--orange); font-weight:600; margin-top:16px; }
-    .solution-body { flex:1; }
-    .helpful-btn { display:inline-flex; align-items:center; gap:6px; background:none; border:1px solid var(--border); border-radius:8px; padding:5px 12px; cursor:pointer; transition:all 0.2s; margin-top:8px; }
-    .helpful-btn:hover { border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.05); }
-    .helpful-btn.voted { border-color:rgba(74,222,128,0.3); background:rgba(74,222,128,0.07); cursor:default; pointer-events:none; }
-    .helpful-icon { font-size:12px; }
-    .helpful-text { font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); }
+    .problems{display:flex;flex-direction:column;gap:10px;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 22px;cursor:pointer;transition:all 0.22s;animation:fadeUp 0.5s ease both;position:relative;overflow:hidden;}
+    .card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,146,60,0.02) 0%,transparent 60%);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+    .card:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,0.3);}
+    .card:hover::before{opacity:1;}
+    .card.expanded{background:rgba(251,146,60,0.04);border-color:var(--orange-border);box-shadow:0 8px 32px rgba(251,146,60,0.08);}
+    .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;}
+    .card-body{flex:1;}
+    .card-cat{font-size:9px;font-family:'DM Mono',monospace;font-weight:500;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:6px;}
+    .card-text{font-size:15px;line-height:1.6;color:var(--text);margin-bottom:12px;}
+    .card-meta{display:flex;align-items:center;gap:12px;}
+    .card-meta-item{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.3);}
+    .card-meta-dot{color:rgba(255,255,255,0.12);}
+    .metoo-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:13px;padding:11px 13px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:70px;flex-shrink:0;}
+    .metoo-btn:hover{background:var(--orange-dim);border-color:var(--orange-border);transform:scale(1.04);}
+    .metoo-btn.active{background:var(--orange-dim);border-color:rgba(251,146,60,0.45);animation:glow 2s ease-in-out infinite;}
+    .metoo-icon{font-size:20px;}
+    .metoo-count{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.55);transition:all 0.2s;}
+    .metoo-btn.active .metoo-count{color:var(--orange);}
+    .metoo-label{font-size:9px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.25);}
+    .metoo-btn.active .metoo-label{color:var(--orange);}
+    .card-expanded{display:none;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.06);}
+    .card.expanded .card-expanded{display:block;animation:fadeUp 0.3s ease;}
+    .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:12px;}
+    .solution-item{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;}
+    .solution-num{width:20px;height:20px;min-width:20px;background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'DM Mono',monospace;color:var(--orange);font-weight:600;margin-top:2px;}
+    .solution-body{flex:1;}
+    .solution-box{background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.12);border-left:3px solid rgba(251,146,60,0.4);border-radius:0 10px 10px 0;padding:12px 14px;font-size:14px;line-height:1.7;color:rgba(255,255,255,0.7);font-style:italic;margin-bottom:8px;}
+    .helpful-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;transition:all 0.2s;}
+    .helpful-btn:hover{border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.05);}
+    .helpful-btn.voted{border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.07);cursor:default;pointer-events:none;}
+    .helpful-icon{font-size:12px;}
+    .helpful-text{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
+    .solution-actions{margin-top:14px;}
+    .sol-btn{border-radius:9px;padding:8px 14px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+    .sol-btn-ghost{background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--muted);}
+    .sol-btn-ghost:hover{border-color:var(--border2);color:var(--text2);}
 
-    /* Loading */
-    .loading { text-align:center; padding:56px 20px; }
-    .spinner { width:28px; height:28px; border:2px solid rgba(255,255,255,0.08); border-top-color:var(--orange); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 14px; }
-    .loading-text { font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); }
-
-    /* Empty */
-    .empty { text-align:center; padding:64px 20px; border:1px dashed rgba(255,255,255,0.07); border-radius:16px; }
-    .empty-icon { font-size:36px; margin-bottom:14px; }
-    .empty-text { color:var(--muted); font-size:14px; line-height:1.75; }
-    .empty-link { color:var(--orange); cursor:pointer; }
+    /* Loading / Empty */
+    .loading{text-align:center;padding:56px 20px;}
+    .spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.08);border-top-color:var(--orange);border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto 14px;}
+    .loading-text{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);}
+    .empty{text-align:center;padding:56px 20px;border:1px dashed rgba(255,255,255,0.07);border-radius:16px;}
+    .empty-icon{font-size:34px;margin-bottom:12px;}
+    .empty-text{color:var(--muted);font-size:14px;line-height:1.75;}
+    .empty-link{color:var(--orange);cursor:pointer;}
 
     /* CTA */
-    .cta { margin-top:56px; text-align:center; background:linear-gradient(135deg,rgba(251,146,60,0.06) 0%,rgba(139,92,246,0.04) 100%); border:1px solid var(--orange-border); border-radius:24px; padding:52px 32px; position:relative; overflow:hidden; }
-    .cta::before { content:''; position:absolute; top:-80px; left:50%; transform:translateX(-50%); width:400px; height:400px; background:radial-gradient(circle,rgba(251,146,60,0.1) 0%,transparent 65%); pointer-events:none; }
-    .cta-tag { display:inline-block; font-size:10px; font-family:'DM Mono',monospace; color:var(--orange); letter-spacing:2px; text-transform:uppercase; margin-bottom:18px; }
-    .cta h2 { font-size:28px; font-weight:600; margin-bottom:12px; letter-spacing:-0.8px; }
-    .cta p { font-size:15px; color:var(--muted); line-height:1.75; max-width:380px; margin:0 auto 32px; }
-    .cta-badges { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:32px; }
-    .cta-badge { display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:100px; padding:6px 14px; font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); }
-    .cta-btn { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:14px; padding:16px 40px; color:#fff; font-size:14px; font-weight:600; font-family:'DM Mono',monospace; cursor:pointer; box-shadow:0 6px 28px rgba(251,146,60,0.4); transition:all 0.2s; letter-spacing:0.3px; }
-    .cta-btn:hover { transform:translateY(-2px); box-shadow:0 10px 36px rgba(251,146,60,0.5); }
+    .cta{margin-top:52px;text-align:center;background:linear-gradient(135deg,rgba(251,146,60,0.06) 0%,rgba(139,92,246,0.04) 100%);border:1px solid var(--orange-border);border-radius:24px;padding:48px 28px;position:relative;overflow:hidden;}
+    .cta::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(251,146,60,0.1) 0%,transparent 65%);pointer-events:none;}
+    .cta-tag{display:inline-block;font-size:10px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+    .cta h2{font-size:26px;font-weight:600;margin-bottom:12px;letter-spacing:-0.8px;}
+    .cta p{font-size:14px;color:var(--muted);line-height:1.75;max-width:360px;margin:0 auto 28px;}
+    .cta-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:28px;}
+    .cta-badge{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:100px;padding:5px 13px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
+    .cta-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:13px;padding:14px 36px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 6px 24px rgba(251,146,60,0.38);transition:all 0.2s;}
+    .cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(251,146,60,0.5);}
 
     /* Footer */
-    footer { border-top:1px solid var(--border); padding:48px 0 32px; margin-top:80px; }
-    .footer-inner { max-width:760px; margin:0 auto; padding:0 24px; }
-    .footer-top { display:flex; justify-content:space-between; align-items:flex-start; gap:40px; margin-bottom:40px; flex-wrap:wrap; }
-    .footer-brand .logo-text { font-size:15px; margin-bottom:10px; display:block; }
-    .footer-tagline { font-size:13px; color:var(--muted); line-height:1.65; max-width:220px; }
-    .footer-col h4 { font-size:10px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.25); letter-spacing:2px; text-transform:uppercase; margin-bottom:16px; }
-    .footer-links { display:flex; flex-direction:column; gap:10px; }
-    .footer-link { font-size:13px; color:var(--muted); cursor:pointer; transition:color 0.2s; text-decoration:none; font-family:'DM Mono',monospace; background:none; border:none; text-align:left; }
-    .footer-link:hover { color:var(--orange); }
-    .footer-bottom { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:28px; border-top:1px solid var(--border); }
-    .footer-copy { font-size:11px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.18); }
-    .footer-copy span { color:var(--orange); }
-    .footer-legal { display:flex; gap:20px; }
-    .footer-legal-link { font-size:11px; font-family:'DM Mono',monospace; color:rgba(255,255,255,0.2); cursor:pointer; background:none; border:none; transition:color 0.2s; }
-    .footer-legal-link:hover { color:var(--muted); }
+    footer{border-top:1px solid var(--border);padding:44px 0 28px;margin-top:72px;}
+    .footer-inner{max-width:760px;margin:0 auto;padding:0 24px;}
+    .footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;margin-bottom:36px;flex-wrap:wrap;}
+    .footer-brand .logo-text{font-size:15px;margin-bottom:10px;display:block;}
+    .footer-tagline{font-size:13px;color:var(--muted);line-height:1.65;max-width:220px;}
+    .footer-col h4{font-size:10px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.25);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;}
+    .footer-links{display:flex;flex-direction:column;gap:10px;}
+    .footer-link{font-size:13px;color:var(--muted);cursor:pointer;transition:color 0.2s;text-decoration:none;font-family:'DM Mono',monospace;background:none;border:none;text-align:left;}
+    .footer-link:hover{color:var(--orange);}
+    .footer-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding-top:24px;border-top:1px solid var(--border);}
+    .footer-copy{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.18);}
+    .footer-copy span{color:var(--orange);}
+    .footer-legal{display:flex;gap:18px;}
+    .footer-legal-link{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.2);cursor:pointer;background:none;border:none;transition:color 0.2s;}
+    .footer-legal-link:hover{color:var(--muted);}
 
-    /* Modal */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:100; align-items:center; justify-content:center; padding:20px; }
-    .modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
-    .modal { background:#111113; border:1px solid rgba(255,255,255,0.1); border-radius:22px; padding:36px; width:100%; max-width:500px; animation:fadeUp 0.3s ease; position:relative; }
-    .modal-close { position:absolute; top:18px; right:18px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--muted); font-size:12px; cursor:pointer; font-family:'DM Mono',monospace; }
-    .modal-close:hover { color:var(--text); }
-    .modal h3 { font-size:22px; font-weight:600; margin-bottom:8px; }
-    .modal-sub { font-size:13px; color:var(--muted); margin-bottom:28px; line-height:1.65; }
-    .modal label { display:block; font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); letter-spacing:1.2px; text-transform:uppercase; margin-bottom:8px; }
-    .modal textarea,.modal select { width:100%; background:rgba(255,255,255,0.035); border:1px solid var(--border); border-radius:11px; padding:13px 15px; color:var(--text); font-family:'Lora',serif; font-size:14px; outline:none; margin-bottom:20px; resize:vertical; transition:border-color 0.2s; }
-    .modal textarea:focus,.modal select:focus { border-color:var(--orange-border); background:rgba(251,146,60,0.03); }
-    .modal textarea { min-height:100px; }
-    .modal select option { background:#111113; }
-    .modal-anon { display:flex; align-items:center; gap:8px; font-size:12px; font-family:'DM Mono',monospace; color:var(--muted); margin-bottom:24px; }
-    .anon-dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 6px rgba(74,222,128,0.6); }
-    .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
-    .modal-cancel { background:none; border:1px solid var(--border); border-radius:10px; padding:11px 20px; color:var(--muted); font-family:'DM Mono',monospace; font-size:12px; cursor:pointer; transition:all 0.2s; }
-    .modal-cancel:hover { border-color:var(--border2); color:var(--text2); }
-    .modal-submit { background:linear-gradient(135deg,#fb923c,#ea580c); border:none; border-radius:10px; padding:11px 22px; color:#fff; font-family:'DM Mono',monospace; font-size:12px; font-weight:600; cursor:pointer; box-shadow:0 4px 16px rgba(251,146,60,0.3); transition:all 0.2s; }
-    .modal-submit:hover { box-shadow:0 6px 20px rgba(251,146,60,0.4); }
-    .modal-submit:disabled { opacity:0.45; cursor:not-allowed; }
+    /* Modals */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.open{display:flex;animation:fadeIn 0.2s ease;}
+    .modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:34px;width:100%;max-width:500px;animation:popIn 0.3s ease;position:relative;}
+    .modal-close{position:absolute;top:16px;right:16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;}
+    .modal h3{font-size:21px;font-weight:600;margin-bottom:7px;}
+    .modal-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.65;}
+    .modal label{display:block;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:7px;}
+    .modal textarea,.modal select{width:100%;background:rgba(255,255,255,0.035);border:1px solid var(--border);border-radius:11px;padding:12px 14px;color:var(--text);font-family:'Lora',serif;font-size:14px;outline:none;margin-bottom:18px;resize:vertical;transition:border-color 0.2s;}
+    .modal textarea:focus,.modal select:focus{border-color:var(--orange-border);}
+    .modal textarea{min-height:96px;}
+    .modal select option{background:#111113;}
+    .modal-anon{display:flex;align-items:center;gap:8px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:20px;}
+    .anon-dot{width:7px;height:7px;background:var(--green);border-radius:50%;box-shadow:0 0 6px rgba(74,222,128,0.6);}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+    .modal-cancel{background:none;border:1px solid var(--border);border-radius:10px;padding:10px 18px;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;}
+    .modal-submit{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:10px;padding:10px 20px;color:#fff;font-family:'DM Mono',monospace;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(251,146,60,0.3);}
+    .modal-submit:disabled{opacity:0.45;cursor:not-allowed;}
 
     /* Toast */
-    .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%); background:#17171a; border:1px solid var(--orange-border); border-radius:12px; padding:13px 22px; font-size:12px; font-family:'DM Mono',monospace; color:var(--text); z-index:200; display:none; white-space:nowrap; box-shadow:0 8px 32px rgba(0,0,0,0.4); }
-    .toast.show { display:block; animation:fadeUp 0.3s ease; }
+    .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#17171a;border:1px solid var(--orange-border);border-radius:12px;padding:12px 20px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);z-index:300;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+    .toast.show{display:block;animation:fadeUp 0.3s ease;}
 
-    /* ========== ABOUT PAGE ========== */
-    .about-hero { padding:64px 0 48px; }
-    .page-tag { display:inline-flex; align-items:center; gap:8px; background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:100px; padding:6px 16px; margin-bottom:28px; font-size:10px; font-family:'DM Mono',monospace; color:var(--orange); letter-spacing:1px; text-transform:uppercase; }
-    .page-title { font-size:clamp(32px,6vw,52px); font-weight:600; line-height:1.15; letter-spacing:-1.5px; margin-bottom:20px; background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .page-intro { font-size:17px; color:var(--text2); line-height:1.75; max-width:560px; margin-bottom:48px; }
-    .about-section { margin-bottom:48px; }
-    .about-section h3 { font-size:20px; font-weight:600; margin-bottom:14px; letter-spacing:-0.3px; }
-    .about-section p { font-size:15px; color:var(--text2); line-height:1.8; margin-bottom:14px; }
-    .about-values { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px; }
-    .value-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; }
-    .value-icon { font-size:24px; margin-bottom:12px; }
-    .value-title { font-size:14px; font-weight:600; margin-bottom:6px; }
-    .value-desc { font-size:13px; color:var(--muted); line-height:1.6; }
-    .about-cta { background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:16px; padding:28px; text-align:center; margin-top:48px; }
-    .about-cta p { font-size:15px; color:var(--text2); margin-bottom:16px; }
+    /* About / Legal pages */
+    .page-tag{display:inline-flex;align-items:center;gap:8px;background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:100px;padding:6px 15px;margin-bottom:24px;font-size:10px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:1px;text-transform:uppercase;}
+    .page-title{font-size:clamp(30px,6vw,48px);font-weight:600;line-height:1.15;letter-spacing:-1.5px;margin-bottom:18px;background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,0.55) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .page-intro{font-size:16px;color:var(--text2);line-height:1.75;max-width:540px;margin-bottom:44px;}
+    .about-section{margin-bottom:44px;}
+    .about-section h3{font-size:19px;font-weight:600;margin-bottom:13px;letter-spacing:-0.3px;}
+    .about-section p{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:13px;}
+    .about-values{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+    .value-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px;}
+    .value-icon{font-size:22px;margin-bottom:10px;}
+    .value-title{font-size:14px;font-weight:600;margin-bottom:5px;}
+    .value-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+    .about-cta{background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:16px;padding:26px;text-align:center;margin-top:44px;}
+    .about-cta p{font-size:14px;color:var(--text2);margin-bottom:16px;}
+    .legal-date{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:36px;}
+    .legal-content h2{font-size:20px;font-weight:600;margin:32px 0 12px;letter-spacing:-0.3px;}
+    .legal-content h2:first-child{margin-top:0;}
+    .legal-content p{font-size:14px;color:var(--text2);line-height:1.85;margin-bottom:12px;}
+    .legal-content ul{margin:8px 0 12px 18px;}
+    .legal-content li{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:5px;}
+    .legal-highlight{background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:10px;padding:14px 16px;margin:18px 0;font-size:14px;color:var(--text2);line-height:1.7;}
 
-    /* ========== PRIVACY + TERMS ========== */
-    .legal-hero { padding:56px 0 40px; }
-    .legal-content { max-width:660px; }
-    .legal-content h2 { font-size:22px; font-weight:600; margin:36px 0 14px; letter-spacing:-0.3px; }
-    .legal-content h2:first-child { margin-top:0; }
-    .legal-content p { font-size:14px; color:var(--text2); line-height:1.85; margin-bottom:14px; }
-    .legal-content ul { margin:10px 0 14px 20px; }
-    .legal-content li { font-size:14px; color:var(--text2); line-height:1.8; margin-bottom:6px; }
-    .legal-date { font-size:11px; font-family:'DM Mono',monospace; color:var(--muted); margin-bottom:40px; }
-    .legal-highlight { background:var(--orange-dim); border:1px solid var(--orange-border); border-radius:10px; padding:16px 18px; margin:20px 0; font-size:14px; color:var(--text2); line-height:1.7; }
-
-    @media(max-width:600px) {
-      .nav-links { display:none; }
-      .stats-bar { flex-direction:column; gap:0; }
-      .stat-item:first-child { border-radius:14px 14px 0 0; }
-      .stat-item:last-child { border-radius:0 0 14px 14px; border-left:1px solid var(--border); border-top:none; }
-      .stat-item:not(:first-child):not(:last-child) { border-left:1px solid var(--border); border-top:none; }
-      .search-box { padding:6px 6px 6px 16px; }
-      .search-btn { padding:12px 16px; font-size:12px; }
-      .card { padding:16px; }
-      .about-values { grid-template-columns:1fr; }
-      .footer-top { flex-direction:column; gap:32px; }
+    @media(max-width:600px){
+      .nav-links{display:none;}
+      .stats-bar{flex-direction:column;}
+      .stat-item:first-child{border-radius:14px 14px 0 0;}
+      .stat-item:last-child{border-radius:0 0 14px 14px;border-left:1px solid var(--border);border-top:none;}
+      .stat-item:not(:first-child){border-left:1px solid var(--border);border-top:none;}
+      .search-box{padding:6px 6px 6px 14px;}
+      .search-btn{padding:11px 14px;font-size:12px;}
+      .card{padding:15px;}
+      .about-values{grid-template-columns:1fr;}
+      .footer-top{flex-direction:column;gap:28px;}
     }
   </style>
 </head>
@@ -293,28 +307,61 @@
   <div class="bg-noise"></div>
   <div class="bg-orb bg-orb-1"></div>
   <div class="bg-orb bg-orb-2"></div>
-  <div class="bg-orb bg-orb-3"></div>
   <div class="bg-grid"></div>
+</div>
+
+<!-- WELCOME MODAL (first visit) -->
+<div class="welcome-overlay" id="welcomeOverlay">
+  <div class="welcome-modal">
+    <span class="welcome-emoji">👋</span>
+    <h2>Welcome to Shared Problem</h2>
+    <p>Pick an avatar and an optional nickname so others know who you are. Everything stays anonymous — no email, no signup.</p>
+    <div class="avatar-picker" id="avatarPicker">
+      <div class="avatar-opt selected" data-emoji="🦊" onclick="selectEmoji(this)">🦊</div>
+      <div class="avatar-opt" data-emoji="🐼" onclick="selectEmoji(this)">🐼</div>
+      <div class="avatar-opt" data-emoji="🦁" onclick="selectEmoji(this)">🦁</div>
+      <div class="avatar-opt" data-emoji="🐨" onclick="selectEmoji(this)">🐨</div>
+      <div class="avatar-opt" data-emoji="🦋" onclick="selectEmoji(this)">🦋</div>
+      <div class="avatar-opt" data-emoji="🐙" onclick="selectEmoji(this)">🐙</div>
+      <div class="avatar-opt" data-emoji="🦉" onclick="selectEmoji(this)">🦉</div>
+      <div class="avatar-opt" data-emoji="🐸" onclick="selectEmoji(this)">🐸</div>
+      <div class="avatar-upload-wrap">
+        <div class="avatar-upload-btn" id="uploadBtn" onclick="document.getElementById('avatarFileInput').click()" title="Upload your photo">
+          📷
+        </div>
+        <input type="file" id="avatarFileInput" accept="image/*" onchange="handleAvatarUpload(event,'welcome')"/>
+      </div>
+    </div>
+    <input class="welcome-input" id="nicknameInput" type="text" placeholder="Your nickname (optional)" maxlength="20"/>
+    <button class="welcome-btn" onclick="saveIdentity()">Let's Go →</button>
+    <span class="welcome-skip" onclick="skipIdentity()">Skip — stay fully anonymous</span>
+  </div>
 </div>
 
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <span class="logo-text" onclick="showPage('home')" style="cursor:pointer;font-size:16px;font-weight:600;color:rgba(255,255,255,0.88);letter-spacing:-0.2px;">Shared Problem</span>
+    <span class="logo-text" onclick="showPage('home')">Shared Problem</span>
     <div class="nav-links">
       <button class="nav-link active-nav" onclick="showPage('home')" id="nav-home">Home</button>
       <button class="nav-link" onclick="showPage('about')" id="nav-about">About</button>
       <button class="nav-link" onclick="showPage('privacy')" id="nav-privacy">Privacy</button>
       <button class="nav-link" onclick="showPage('terms')" id="nav-terms">Terms</button>
     </div>
-    <div class="live-badge">
-      <div class="live-dot"></div>
-      <span class="live-text"><span class="live-num" id="liveCount">...</span> shared</span>
+    <div class="nav-right">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text"><span class="live-num" id="liveCount">...</span> shared</span>
+      </div>
+      <div class="nav-profile" onclick="openProfileModal()" id="navProfile" title="Edit your profile">
+        <div class="nav-avatar" id="navAvatarWrap"></div>
+        <span class="nav-name" id="navName">You</span>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- ========== HOME PAGE ========== -->
+<!-- HOME PAGE -->
 <div class="page active" id="page-home">
 <div class="wrapper">
 
@@ -334,26 +381,14 @@
 
   <div class="hero">
     <div class="hero-tag fade-up d2">✦ You are probably not alone</div>
-    <h1 class="fade-up d2">
-      <span class="white">Is it </span><em>just me,</em><br/>
-      <span class="white">or does everyone<br/>deal with this?</span>
-    </h1>
+    <h1 class="fade-up d2"><span class="white">Is it </span><em>just me,</em><br/><span class="white">or does everyone<br/>deal with this?</span></h1>
     <p class="hero-sub fade-up d3">Type any problem. Find how many others share it — and what actually worked for them.</p>
   </div>
 
   <div class="stats-bar fade-up d3">
-    <div class="stat-item">
-      <div class="stat-num" id="statProblems">...</div>
-      <div class="stat-label">Problems Shared</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" id="statMetoos">...</div>
-      <div class="stat-label">Me Too Clicks</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-num" id="statSolutions">...</div>
-      <div class="stat-label">Solutions Added</div>
-    </div>
+    <div class="stat-item"><div class="stat-num" id="statProblems">...</div><div class="stat-label">Problems Shared</div></div>
+    <div class="stat-item"><div class="stat-num" id="statMetoos">...</div><div class="stat-label">Me Too Clicks</div></div>
+    <div class="stat-item"><div class="stat-num" id="statSolutions">...</div><div class="stat-label">Solutions Added</div></div>
   </div>
 
   <div class="trending fade-up d4">
@@ -364,11 +399,7 @@
     <span class="trend-pill" onclick="fillSearch(this)">Cannot fall asleep</span>
   </div>
 
-  <div class="divider fade-up d4">
-    <div class="divider-line"></div>
-    <div class="divider-text">Browse Problems</div>
-    <div class="divider-line"></div>
-  </div>
+  <div class="divider fade-up d4"><div class="divider-line"></div><div class="divider-text">Browse Problems</div><div class="divider-line"></div></div>
 
   <div class="cats fade-up d4">
     <button class="cat-btn active" onclick="filterCat(this,'All')">All</button>
@@ -394,8 +425,8 @@
     <h2>Share yours anonymously</h2>
     <p>No account needed. Takes 30 seconds. You might help thousands of people feel less alone tomorrow.</p>
     <div class="cta-badges">
-      <span class="cta-badge">🔒 100% Anonymous</span>
-      <span class="cta-badge">⚡ No account needed</span>
+      <span class="cta-badge">🔒 Anonymous by default</span>
+      <span class="cta-badge">⚡ No signup needed</span>
       <span class="cta-badge">🌍 Seen by everyone</span>
     </div>
     <button class="cta-btn" onclick="openModal()">Share a Problem →</button>
@@ -403,53 +434,30 @@
 </div>
 </div>
 
-<!-- ========== ABOUT PAGE ========== -->
+<!-- ABOUT PAGE -->
 <div class="page" id="page-about">
-<div class="wrapper">
-  <div class="about-hero">
-    <div class="page-tag">✦ Our Story</div>
-    <h1 class="page-title">Why we built<br/>Shared Problem</h1>
-    <p class="page-intro">Because the most isolating feeling in the world is thinking you're the only one going through something — when you're probably not.</p>
-  </div>
-
+<div class="wrapper" style="padding-top:52px;">
+  <div class="page-tag">✦ Our Story</div>
+  <h1 class="page-title">Why we built<br/>Shared Problem</h1>
+  <p class="page-intro">Because the most isolating feeling in the world is thinking you're the only one going through something — when you're probably not.</p>
   <div class="about-section">
     <h3>The Problem We Noticed</h3>
     <p>Every day, millions of people deal with the same frustrations — a landlord who won't reply, a manager who takes credit, an anxious mind that won't let them sleep. But most people suffer in silence, assuming they're alone.</p>
-    <p>Reddit and Quora exist, but they're noisy and slow. You have to search, post, wait for replies, and wade through arguments. There was no simple, fast, emotionally satisfying way to answer the one question everyone really wants answered: <em>is it just me?</em></p>
+    <p>There was no simple, fast, emotionally satisfying way to answer the one question everyone really wants answered: <em>is it just me?</em></p>
   </div>
-
   <div class="about-section">
     <h3>What We Built</h3>
-    <p>Shared Problem is the fastest way to find out you're not alone. Type any problem, see how many others share it, and discover what actually worked for them — all in under 60 seconds, completely anonymously.</p>
-    <p>No accounts. No judgment. No noise. Just honest, human connection around the problems we all quietly carry.</p>
+    <p>Shared Problem is the fastest way to find out you're not alone. Type any problem, see how many others share it, and discover what actually worked for them — completely anonymously, in under 60 seconds.</p>
   </div>
-
   <div class="about-section">
     <h3>What We Believe</h3>
     <div class="about-values">
-      <div class="value-card">
-        <div class="value-icon">🔒</div>
-        <div class="value-title">Privacy First</div>
-        <div class="value-desc">No accounts, no tracking, no selling your data. Your problems stay anonymous, always.</div>
-      </div>
-      <div class="value-card">
-        <div class="value-icon">🤝</div>
-        <div class="value-title">Real Help Only</div>
-        <div class="value-desc">We only show solutions that real people have tried and that actually worked for them.</div>
-      </div>
-      <div class="value-card">
-        <div class="value-icon">❤️</div>
-        <div class="value-title">No Judgment</div>
-        <div class="value-desc">Every problem is valid. We exist to validate your experience, not question it.</div>
-      </div>
-      <div class="value-card">
-        <div class="value-icon">🌍</div>
-        <div class="value-title">Open to All</div>
-        <div class="value-desc">Free forever. No paywalls. Everyone deserves to feel less alone regardless of who they are.</div>
-      </div>
+      <div class="value-card"><div class="value-icon">🔒</div><div class="value-title">Privacy First</div><div class="value-desc">No accounts, no tracking, no selling your data. Your problems stay anonymous, always.</div></div>
+      <div class="value-card"><div class="value-icon">🤝</div><div class="value-title">Real Help Only</div><div class="value-desc">We only show solutions that real people have tried and that actually worked for them.</div></div>
+      <div class="value-card"><div class="value-icon">❤️</div><div class="value-title">No Judgment</div><div class="value-desc">Every problem is valid. We exist to validate your experience, not question it.</div></div>
+      <div class="value-card"><div class="value-icon">🌍</div><div class="value-title">Open to All</div><div class="value-desc">Free forever. No paywalls. Everyone deserves to feel less alone.</div></div>
     </div>
   </div>
-
   <div class="about-cta">
     <p>Have a problem that's not on the site yet? Share it anonymously and help others feel less alone.</p>
     <button class="cta-btn" onclick="showPage('home');setTimeout(openModal,300)">Share a Problem →</button>
@@ -457,97 +465,73 @@
 </div>
 </div>
 
-<!-- ========== PRIVACY PAGE ========== -->
+<!-- PRIVACY PAGE -->
 <div class="page" id="page-privacy">
-<div class="wrapper">
-  <div class="legal-hero">
-    <div class="page-tag">✦ Legal</div>
-    <h1 class="page-title">Privacy Policy</h1>
-    <p class="legal-date">Last updated: January 2026</p>
-  </div>
+<div class="wrapper" style="padding-top:52px;">
+  <div class="page-tag">✦ Legal</div>
+  <h1 class="page-title">Privacy Policy</h1>
+  <p class="legal-date">Last updated: January 2026</p>
   <div class="legal-content">
-    <div class="legal-highlight">
-      <strong>Short version:</strong> We collect almost nothing. We don't require accounts. We don't sell your data. Your problems are anonymous by default.
-    </div>
+    <div class="legal-highlight"><strong>Short version:</strong> We collect almost nothing. No email required. Your problems are anonymous. Nicknames are stored only in your browser.</div>
     <h2>What We Collect</h2>
     <p>Shared Problem is designed to be used without creating an account. When you use the site, we may collect:</p>
     <ul>
-      <li>Problems and solutions you submit (stored anonymously — no name, email, or identity attached)</li>
-      <li>Me Too clicks you make (stored per browser using localStorage, not linked to any identity)</li>
-      <li>Basic analytics data such as page views and country (through anonymous aggregates only)</li>
+      <li>Problems and solutions you submit — stored with your chosen nickname and avatar only</li>
+      <li>Me Too clicks — stored per browser using localStorage</li>
+      <li>Nicknames and avatars — stored only in your browser's localStorage, never on our servers</li>
     </ul>
     <h2>What We Don't Collect</h2>
     <ul>
-      <li>Your name, email address, or any personal identity</li>
+      <li>Your real name, email address, or any personal identity</li>
       <li>Your IP address linked to specific submissions</li>
       <li>Any payment information (the site is free)</li>
-      <li>Any data from third parties or social media platforms</li>
     </ul>
-    <h2>How We Use Data</h2>
-    <p>The problems and solutions you submit are used solely to help other users feel less alone and find solutions. We do not use your submissions for advertising, profiling, or any commercial purpose.</p>
-    <h2>Cookies and Local Storage</h2>
-    <p>We use your browser's localStorage only to remember which problems you have already clicked Me Too on — so we don't count you twice. This data never leaves your device and is not shared with us or any third party.</p>
+    <h2>Nicknames and Avatars</h2>
+    <p>If you choose a nickname or upload a profile photo, these are stored in your browser's localStorage only. Your nickname appears on your submitted problems and solutions to give the community a human feel, but it is not linked to any real identity.</p>
     <h2>Third Party Services</h2>
-    <p>We use Supabase to store submitted problems and solutions. Supabase processes data in compliance with GDPR. We use Google Fonts for typography. No advertising networks or tracking pixels are used on this site.</p>
-    <h2>Your Rights</h2>
-    <p>Since we do not collect personally identifiable information, there is no personal data to delete or export. If you have concerns about a specific submission, contact us and we will remove it promptly.</p>
+    <p>We use Supabase to store submitted problems and solutions. We use Google Fonts for typography. No advertising networks or tracking pixels are used on this site.</p>
     <h2>Contact</h2>
     <p>For any privacy-related questions, use the Submit form on the homepage to reach us.</p>
   </div>
 </div>
 </div>
 
-<!-- ========== TERMS PAGE ========== -->
+<!-- TERMS PAGE -->
 <div class="page" id="page-terms">
-<div class="wrapper">
-  <div class="legal-hero">
-    <div class="page-tag">✦ Legal</div>
-    <h1 class="page-title">Terms of Service</h1>
-    <p class="legal-date">Last updated: January 2026</p>
-  </div>
+<div class="wrapper" style="padding-top:52px;">
+  <div class="page-tag">✦ Legal</div>
+  <h1 class="page-title">Terms of Service</h1>
+  <p class="legal-date">Last updated: January 2026</p>
   <div class="legal-content">
-    <div class="legal-highlight">
-      <strong>Short version:</strong> Be kind, be honest, don't abuse the platform. We reserve the right to remove content that violates these terms.
-    </div>
+    <div class="legal-highlight"><strong>Short version:</strong> Be kind, be honest, don't abuse the platform.</div>
     <h2>Acceptance of Terms</h2>
-    <p>By using Shared Problem, you agree to these terms. If you do not agree, please do not use the site.</p>
+    <p>By using Shared Problem, you agree to these terms.</p>
     <h2>What You Can Do</h2>
     <ul>
       <li>Submit real problems you or others genuinely face</li>
-      <li>Share solutions that have actually worked for you or others</li>
+      <li>Share solutions that have actually worked for you</li>
       <li>Click Me Too on problems you relate to</li>
-      <li>Use the site for personal, non-commercial purposes</li>
+      <li>Choose a nickname and avatar to represent yourself</li>
     </ul>
     <h2>What You Cannot Do</h2>
     <ul>
-      <li>Submit false, misleading, or fabricated problems or solutions</li>
-      <li>Post harmful, hateful, threatening, or abusive content</li>
-      <li>Spam the platform with duplicate or irrelevant submissions</li>
-      <li>Use the site to promote products, services, or spam links</li>
+      <li>Submit false, misleading, or harmful content</li>
+      <li>Use the platform to promote products or spam</li>
       <li>Attempt to scrape, hack, or disrupt the service</li>
-      <li>Submit content that violates any applicable laws</li>
     </ul>
-    <h2>Content Moderation</h2>
-    <p>We reserve the right to remove any content that violates these terms without notice. We are not responsible for user-submitted content but will act promptly on reports of abuse.</p>
     <h2>Disclaimer</h2>
-    <p>Shared Problem is provided as-is without warranties of any kind. The solutions shared on this platform are community-sourced and not professional advice. Always consult a qualified professional for medical, legal, or financial decisions.</p>
-    <h2>Intellectual Property</h2>
-    <p>The Shared Problem name, logo, and design are owned by Shared Problem. Content submitted by users remains the property of the respective users. By submitting content, you grant us a non-exclusive license to display it on the platform.</p>
-    <h2>Changes to Terms</h2>
-    <p>We may update these terms from time to time. Continued use of the site after changes constitutes acceptance of the new terms.</p>
-    <h2>Contact</h2>
-    <p>For questions about these terms, use the Submit form on the homepage to reach us.</p>
-    <p style="margin-top:32px;font-size:13px;color:var(--muted)">© 2026 Shared Problem. All rights reserved.</p>
+    <p>Solutions shared are community-sourced and not professional advice. Always consult a qualified professional for medical, legal, or financial decisions.</p>
+    <p style="margin-top:28px;font-size:13px;color:var(--muted)">© 2026 Shared Problem. All rights reserved.</p>
   </div>
 </div>
 </div>
 
-<!-- FOOTER (shown on all pages) -->
+<!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
-        <span class="logo-text">🤔 Shared Problem</span>
+        <span class="logo-text">Shared Problem</span>
         <p class="footer-tagline">A place where you discover you are not alone in whatever you are going through.</p>
       </div>
       <div class="footer-col">
@@ -569,50 +553,45 @@
     <div class="footer-bottom">
       <div class="footer-copy">© 2026 <span>Shared Problem</span>. All rights reserved.</div>
       <div class="footer-legal">
-        <button class="footer-legal-link" onclick="showPage('privacy')">Privacy Policy</button>
-        <button class="footer-legal-link" onclick="showPage('terms')">Terms of Service</button>
+        <button class="footer-legal-link" onclick="showPage('privacy')">Privacy</button>
+        <button class="footer-legal-link" onclick="showPage('terms')">Terms</button>
       </div>
     </div>
   </div>
 </footer>
 
-<!-- Submit Modal -->
+<!-- SUBMIT PROBLEM MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕ close</button>
     <h3>Share Your Problem</h3>
-    <p class="modal-sub">Anonymous by default. No account needed. Your problem might help thousands feel less alone.</p>
-    <div class="modal-anon"><div class="anon-dot"></div> Your submission is 100% anonymous</div>
+    <p class="modal-sub">Posting as <strong id="postingAs">Anonymous</strong>. No email needed.</p>
+    <div class="modal-anon"><div class="anon-dot"></div> Your identity is optional and stored only in your browser</div>
     <label>Describe your problem</label>
-    <textarea id="problemText" placeholder="Be specific — e.g. My manager takes credit for my work in meetings and I don't know how to handle it..."></textarea>
+    <textarea id="problemText" placeholder="Be specific — e.g. My manager takes credit for my work in meetings..."></textarea>
     <label>Category</label>
     <select id="problemCat">
-      <option value="Work">Work</option>
-      <option value="Health">Health</option>
-      <option value="Home">Home</option>
-      <option value="Money">Money</option>
-      <option value="Tech">Tech</option>
-      <option value="Relationships">Relationships</option>
+      <option value="Work">Work</option><option value="Health">Health</option>
+      <option value="Home">Home</option><option value="Money">Money</option>
+      <option value="Tech">Tech</option><option value="Relationships">Relationships</option>
       <option value="Other">Other</option>
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
-      <button class="modal-submit" id="submitBtn" onclick="submitProblem()">Submit Anonymously →</button>
+      <button class="modal-submit" id="submitBtn" onclick="submitProblem()">Submit →</button>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<!-- Solution Modal -->
+<!-- SUBMIT SOLUTION MODAL -->
 <div class="modal-overlay" id="solutionOverlay" onclick="closeSolutionOutside(event)">
   <div class="modal">
     <button class="modal-close" onclick="closeSolutionModal()">✕ close</button>
     <h3>Add Your Solution</h3>
-    <p class="modal-sub" id="solutionProblemTitle" style="color:var(--orange);font-style:italic;font-size:14px;margin-bottom:20px;"></p>
-    <div class="modal-anon"><div class="anon-dot"></div> Your solution is 100% anonymous</div>
-    <label>What worked for you?</label>
-    <textarea id="solutionText" placeholder="Describe exactly what you did and why it worked. Be as specific as possible — specifics help people most..."></textarea>
+    <p class="modal-sub" id="solutionProblemTitle" style="color:var(--orange);font-style:italic;font-size:13px;margin-bottom:18px;"></p>
+    <div class="modal-anon"><div class="anon-dot"></div> Posting as <strong id="solutionPostingAs">Anonymous</strong></div>
+    <label style="margin-top:16px;">What worked for you?</label>
+    <textarea id="solutionText" placeholder="Describe exactly what you did and why it worked. Be specific — specifics help people most..."></textarea>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeSolutionModal()">Cancel</button>
       <button class="modal-submit" id="solutionSubmitBtn" onclick="submitSolution()">Submit Solution →</button>
@@ -620,111 +599,293 @@
   </div>
 </div>
 
+<!-- PROFILE EDIT MODAL -->
+<div class="profile-overlay" id="profileOverlay" onclick="closeProfileOutside(event)">
+  <div class="profile-modal">
+    <button class="modal-close" onclick="closeProfileModal()">✕ close</button>
+    <h3>Your Profile</h3>
+    <div class="profile-avatar-big" id="profileAvatarBig" onclick="document.getElementById('profileFileInput').click()">
+      <div class="edit-overlay">📷</div>
+    </div>
+    <input type="file" id="profileFileInput" accept="image/*" onchange="handleAvatarUpload(event,'profile')"/>
+    <div class="avatar-picker" id="profileEmojiPicker" style="margin-bottom:20px;">
+      <div class="avatar-opt" data-emoji="🦊" onclick="selectProfileEmoji(this)">🦊</div>
+      <div class="avatar-opt" data-emoji="🐼" onclick="selectProfileEmoji(this)">🐼</div>
+      <div class="avatar-opt" data-emoji="🦁" onclick="selectProfileEmoji(this)">🦁</div>
+      <div class="avatar-opt" data-emoji="🐨" onclick="selectProfileEmoji(this)">🐨</div>
+      <div class="avatar-opt" data-emoji="🦋" onclick="selectProfileEmoji(this)">🦋</div>
+      <div class="avatar-opt" data-emoji="🐙" onclick="selectProfileEmoji(this)">🐙</div>
+      <div class="avatar-opt" data-emoji="🦉" onclick="selectProfileEmoji(this)">🦉</div>
+      <div class="avatar-opt" data-emoji="🐸" onclick="selectProfileEmoji(this)">🐸</div>
+    </div>
+    <input class="welcome-input" id="profileNicknameInput" type="text" placeholder="Your nickname (optional)" maxlength="20" style="margin-bottom:20px;"/>
+    <button class="welcome-btn" onclick="updateProfile()">Save Changes</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  const SUPABASE_URL = 'https://odowphgmadyoadiztjmu.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kb3dwaGdtYWR5b2FkaXp0am11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzE0NDksImV4cCI6MjA5MzMwNzQ0OX0.E9reCzIFafIRA1zvGNCrJs2lOFPo8l46wmv3KupoNf0';
-  const { createClient } = supabase;
-  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+  const SUPABASE_URL='https://odowphgmadyoadiztjmu.supabase.co';
+  const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kb3dwaGdtYWR5b2FkaXp0am11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc3MzE0NDksImV4cCI6MjA5MzMwNzQ0OX0.E9reCzIFafIRA1zvGNCrJs2lOFPo8l46wmv3KupoNf0';
+  const {createClient}=supabase;
+  const db=createClient(SUPABASE_URL,SUPABASE_KEY);
 
-  const seedData = [
-    { text:"My manager takes credit for my work in meetings and I never get recognition.", category:"Work", metoo_count:34, solution_count:3, sol:"Start emailing your manager a weekly summary of your work. Paper trail means they cannot erase your contributions." },
-    { text:"I feel exhausted after video calls even when nothing stressful happened.", category:"Work", metoo_count:27, solution_count:2, sol:"Turn off self-view during calls. Watching yourself constantly is neurologically draining." },
-    { text:"I procrastinate even on things I actually want to do.", category:"Work", metoo_count:41, solution_count:4, sol:"The 2-minute rule — just commit to starting for 2 minutes. You almost always keep going." },
-    { text:"My landlord ignores every maintenance request I send.", category:"Home", metoo_count:19, solution_count:2, sol:"Send everything via certified email and cc your local housing authority. Most landlords respond immediately." },
-    { text:"My neighbor plays loud music late at night every weekend.", category:"Home", metoo_count:23, solution_count:2, sol:"Document 3 incidents with dates and times, then send a formal letter. Most people stop when it is in writing." },
-    { text:"I can never fall asleep even when I am completely exhausted.", category:"Health", metoo_count:38, solution_count:3, sol:"The military sleep method — relax your face muscles first, then shoulders, then breathe slowly. Takes 2 minutes." },
-    { text:"My bank charges fees I did not know about and will not reverse them.", category:"Money", metoo_count:17, solution_count:1, sol:"Say: I am considering closing my account. Retention teams can waive fees that front-line staff cannot." },
-    { text:"My internet is slow only at certain times of the day.", category:"Tech", metoo_count:12, solution_count:1, sol:"It is peak-hour congestion. Call your ISP and ask to be moved to a less congested node." },
-  ];
+  // ─── Identity ───────────────────────────────
+  let identity = JSON.parse(localStorage.getItem('sp_identity') || 'null');
 
-  let allProblems = [];
-  let activeCat = 'All';
-  let metooed = JSON.parse(localStorage.getItem('sp_metooed') || '{}');
+  function getDisplayName(){ return identity?.name || 'Anonymous'; }
+  function getAvatar(){ return identity?.avatar || '🌀'; }
+  function isPhotoAvatar(){ return identity?.avatarType === 'photo'; }
 
-  // --- Page routing ---
-  function showPage(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-'+name).classList.add('active');
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active-nav'));
-    const nl = document.getElementById('nav-'+name);
-    if (nl) nl.classList.add('active-nav');
-    window.scrollTo(0,0);
+  function avatarHTML(size=22){
+    if(isPhotoAvatar() && identity.avatarData){
+      return `<div class="author-avatar-sm" style="width:${size}px;height:${size}px;"><img src="${identity.avatarData}" alt=""/></div>`;
+    }
+    return `<div class="author-avatar-sm" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.65)}px;">${getAvatar()}</div>`;
   }
 
-  // --- Init ---
-  async function init() {
+  function renderNavProfile(){
+    const wrap = document.getElementById('navAvatarWrap');
+    if(isPhotoAvatar() && identity?.avatarData){
+      wrap.innerHTML=`<img src="${identity.avatarData}" alt=""/>`;
+    } else {
+      wrap.textContent = getAvatar();
+      wrap.style.fontSize = '16px';
+    }
+    document.getElementById('navName').textContent = getDisplayName();
+  }
+
+  function updatePostingAs(){
+    const n = getDisplayName();
+    const el = document.getElementById('postingAs');
+    const el2 = document.getElementById('solutionPostingAs');
+    if(el) el.textContent = n;
+    if(el2) el2.textContent = n;
+  }
+
+  // Welcome modal
+  let selectedEmoji = '🦊';
+  let uploadedAvatarData = null;
+
+  function selectEmoji(el){
+    document.querySelectorAll('#avatarPicker .avatar-opt').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedEmoji = el.dataset.emoji;
+    uploadedAvatarData = null;
+    document.getElementById('uploadBtn').innerHTML = '📷';
+  }
+
+  function handleAvatarUpload(event, context){
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadedAvatarData = e.target.result;
+      if(context === 'welcome'){
+        document.getElementById('uploadBtn').innerHTML = `<img src="${uploadedAvatarData}" alt=""/>`;
+        document.querySelectorAll('#avatarPicker .avatar-opt').forEach(e=>e.classList.remove('selected'));
+      } else {
+        document.getElementById('profileAvatarBig').querySelector('.edit-overlay').insertAdjacentHTML('beforebegin',`<img src="${uploadedAvatarData}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;"/>`);
+        document.querySelectorAll('#profileEmojiPicker .avatar-opt').forEach(e=>e.classList.remove('selected'));
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function saveIdentity(){
+    const name = document.getElementById('nicknameInput').value.trim();
+    identity = {
+      name: name || 'Anonymous',
+      avatar: uploadedAvatarData ? '🌀' : selectedEmoji,
+      avatarType: uploadedAvatarData ? 'photo' : 'emoji',
+      avatarData: uploadedAvatarData || null,
+    };
+    localStorage.setItem('sp_identity', JSON.stringify(identity));
+    localStorage.setItem('sp_welcomed', '1');
+    document.getElementById('welcomeOverlay').classList.add('hidden');
+    renderNavProfile();
+    updatePostingAs();
+    showToast('✅ Welcome, '+getDisplayName()+'!');
+  }
+
+  function skipIdentity(){
+    identity = { name:'Anonymous', avatar:'🌀', avatarType:'emoji', avatarData:null };
+    localStorage.setItem('sp_identity', JSON.stringify(identity));
+    localStorage.setItem('sp_welcomed','1');
+    document.getElementById('welcomeOverlay').classList.add('hidden');
+    renderNavProfile();
+  }
+
+  // Profile modal
+  let profileSelectedEmoji = '🦊';
+  let profileUploadedData = null;
+
+  function selectProfileEmoji(el){
+    document.querySelectorAll('#profileEmojiPicker .avatar-opt').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected');
+    profileSelectedEmoji = el.dataset.emoji;
+    profileUploadedData = null;
+    const big = document.getElementById('profileAvatarBig');
+    const img = big.querySelector('img');
+    if(img) img.remove();
+    big.style.fontSize='44px';
+    big.childNodes[0].textContent = profileSelectedEmoji;
+  }
+
+  function openProfileModal(){
+    // Pre-fill current values
+    const big = document.getElementById('profileAvatarBig');
+    const overlay = big.querySelector('.edit-overlay');
+    // Clear old
+    Array.from(big.childNodes).forEach(n=>{ if(n!==overlay) n.remove(); });
+    if(isPhotoAvatar() && identity?.avatarData){
+      big.insertAdjacentHTML('afterbegin',`<img src="${identity.avatarData}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;position:absolute;top:0;left:0;"/>`);
+      big.style.fontSize='0';
+    } else {
+      big.insertAdjacentHTML('afterbegin', getAvatar());
+      big.style.fontSize='44px';
+    }
+    document.getElementById('profileNicknameInput').value = identity?.name==='Anonymous' ? '' : (identity?.name||'');
+    // Mark selected emoji
+    document.querySelectorAll('#profileEmojiPicker .avatar-opt').forEach(e=>{
+      e.classList.toggle('selected', e.dataset.emoji === getAvatar());
+    });
+    profileSelectedEmoji = getAvatar();
+    profileUploadedData = null;
+    document.getElementById('profileOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+
+  function closeProfileModal(){
+    document.getElementById('profileOverlay').classList.remove('open');
+    document.body.style.overflow='';
+  }
+  function closeProfileOutside(e){ if(e.target===document.getElementById('profileOverlay')) closeProfileModal(); }
+
+  function updateProfile(){
+    const name = document.getElementById('profileNicknameInput').value.trim();
+    const big = document.getElementById('profileAvatarBig');
+    const hasPhoto = big.querySelector('img') && profileUploadedData;
+    identity = {
+      name: name || 'Anonymous',
+      avatar: hasPhoto ? '🌀' : profileSelectedEmoji,
+      avatarType: hasPhoto ? 'photo' : 'emoji',
+      avatarData: hasPhoto ? profileUploadedData : null,
+    };
+    localStorage.setItem('sp_identity', JSON.stringify(identity));
+    closeProfileModal();
+    renderNavProfile();
+    updatePostingAs();
+    render();
+    showToast('✅ Profile updated!');
+  }
+
+  // ─── Supabase & App ──────────────────────────
+  const seedData=[
+    {text:"My manager takes credit for my work in meetings and I never get recognition.",category:"Work",metoo_count:34,solution_count:3,sol:"Start emailing your manager a weekly summary of your work. Paper trail means they cannot erase your contributions."},
+    {text:"I feel exhausted after video calls even when nothing stressful happened.",category:"Work",metoo_count:27,solution_count:2,sol:"Turn off self-view during calls. Watching yourself constantly is neurologically draining."},
+    {text:"I procrastinate even on things I actually want to do.",category:"Work",metoo_count:41,solution_count:4,sol:"The 2-minute rule — just commit to starting for 2 minutes. You almost always keep going."},
+    {text:"My landlord ignores every maintenance request I send.",category:"Home",metoo_count:19,solution_count:2,sol:"Send everything via certified email and cc your local housing authority. Most landlords respond immediately."},
+    {text:"My neighbor plays loud music late at night every weekend.",category:"Home",metoo_count:23,solution_count:2,sol:"Document 3 incidents with dates and times, then send a formal letter. Most people stop when it is in writing."},
+    {text:"I can never fall asleep even when I am completely exhausted.",category:"Health",metoo_count:38,solution_count:3,sol:"The military sleep method — relax your face muscles first, then shoulders, then breathe slowly. Takes 2 minutes."},
+    {text:"My bank charges fees I did not know about and will not reverse them.",category:"Money",metoo_count:17,solution_count:1,sol:"Say: I am considering closing my account. Retention teams can waive fees that front-line staff cannot."},
+    {text:"My internet is slow only at certain times of the day.",category:"Tech",metoo_count:12,solution_count:1,sol:"It is peak-hour congestion. Call your ISP and ask to be moved to a less congested node."},
+  ];
+
+  let allProblems=[];
+  let activeCat='All';
+  let metooed=JSON.parse(localStorage.getItem('sp_metooed')||'{}');
+  let helpfulVoted=JSON.parse(localStorage.getItem('sp_helpful')||'{}');
+
+  function authorChipHTML(name, avatarEmoji, avatarType, avatarData){
+    let avatarEl;
+    if(avatarType==='photo' && avatarData){
+      avatarEl=`<div class="author-avatar-sm"><img src="${avatarData}" alt=""/></div>`;
+    } else {
+      avatarEl=`<div class="author-avatar-sm" style="font-size:13px;">${avatarEmoji||'🌀'}</div>`;
+    }
+    return `<div class="author-chip">${avatarEl}<span class="author-name-sm">${name||'Anonymous'}</span></div>`;
+  }
+
+  async function init(){
+    // Show welcome if first visit
+    if(!localStorage.getItem('sp_welcomed')){
+      document.getElementById('welcomeOverlay').classList.remove('hidden');
+    } else {
+      document.getElementById('welcomeOverlay').classList.add('hidden');
+      renderNavProfile();
+      updatePostingAs();
+    }
     await seedIfEmpty();
     await loadProblems();
   }
 
-  async function seedIfEmpty() {
-    const { data } = await db.from('problems').select('id').limit(1);
-    if (data && data.length > 0) return;
-    for (const p of seedData) {
-      const { data: ins } = await db.from('problems')
-        .insert({ text:p.text, category:p.category, metoo_count:p.metoo_count, solution_count:p.solution_count })
-        .select().single();
-      if (ins && p.sol) await db.from('solutions').insert({ problem_id:ins.id, text:p.sol, helpful_count:0 });
+  async function seedIfEmpty(){
+    const{data}=await db.from('problems').select('id').limit(1);
+    if(data&&data.length>0) return;
+    for(const p of seedData){
+      const{data:ins}=await db.from('problems').insert({text:p.text,category:p.category,metoo_count:p.metoo_count,solution_count:p.solution_count,author_name:'Shared Problem',author_avatar:'🤔'}).select().single();
+      if(ins&&p.sol) await db.from('solutions').insert({problem_id:ins.id,text:p.sol,helpful_count:0,author_name:'Shared Problem',author_avatar:'🤔'});
     }
   }
 
-  async function loadProblems() {
-    const { data } = await db.from('problems').select('*, solutions(id,text,helpful_count)').order('metoo_count', { ascending:false });
-    allProblems = data || [];
+  async function loadProblems(){
+    const{data}=await db.from('problems').select('*,solutions(id,text,helpful_count,author_name,author_avatar,author_avatar_type,author_avatar_data)').order('metoo_count',{ascending:false});
+    allProblems=data||[];
     updateStats();
     render();
   }
 
-  function updateStats() {
-    const total = allProblems.reduce((s,p) => s+(p.metoo_count||0), 0);
-    const sols = allProblems.reduce((s,p) => s+(p.solution_count||0), 0);
-    document.getElementById('liveCount').textContent = total.toLocaleString();
-    document.getElementById('statProblems').textContent = allProblems.length;
-    document.getElementById('statMetoos').textContent = total.toLocaleString();
-    document.getElementById('statSolutions').textContent = sols;
+  function updateStats(){
+    const total=allProblems.reduce((s,p)=>s+(p.metoo_count||0),0);
+    const sols=allProblems.reduce((s,p)=>s+(p.solution_count||0),0);
+    document.getElementById('liveCount').textContent=total.toLocaleString();
+    document.getElementById('statProblems').textContent=allProblems.length;
+    document.getElementById('statMetoos').textContent=total.toLocaleString();
+    document.getElementById('statSolutions').textContent=sols;
   }
 
-  function render() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    const list = allProblems.filter(p =>
-      (activeCat==='All' || p.category===activeCat) &&
-      (q==='' || p.text.toLowerCase().includes(q))
-    );
-    document.getElementById('sectionCount').textContent = list.length+' problems';
-    document.getElementById('sectionLabel').textContent = q ? 'Search Results' : 'Most Shared Right Now';
-    const container = document.getElementById('problemList');
-    if (list.length===0) {
+  function render(){
+    const q=document.getElementById('searchInput').value.toLowerCase().trim();
+    const list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
+    document.getElementById('sectionCount').textContent=list.length+' problems';
+    document.getElementById('sectionLabel').textContent=q?'Search Results':'Most Shared Right Now';
+    const container=document.getElementById('problemList');
+    if(list.length===0){
       container.innerHTML=`<div class="empty"><div class="empty-icon">🌱</div><div class="empty-text">No one has shared this yet.<br/><span class="empty-link" onclick="openModal()">Be the first →</span></div></div>`;
       return;
     }
-    container.innerHTML = list.map((p,i) => {
-      const sols = [...(p.solutions || [])].sort((a,b) => (b.helpful_count||0) - (a.helpful_count||0));
-      const solCount = sols.length;
-      const m = metooed[p.id];
-      const solsHTML = sols.length > 0
-        ? sols.map((s,idx) => {
-            const alreadyVoted = helpfulVoted[s.id];
-            const hCount = s.helpful_count || 0;
-            const helpfulLabel = hCount > 0
-              ? hCount+' '+(hCount===1?'person found':'people found')+' this helpful'
-              : 'Was this helpful?';
-            return `
-            <div class="solution-item" id="sol-wrap-${s.id}">
-              <div class="solution-num">${idx+1}</div>
-              <div class="solution-body">
-                <div class="solution-box">"${s.text}"</div>
-                <button class="helpful-btn ${alreadyVoted?'voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
-                  <span class="helpful-icon">👍</span>
-                  <span class="helpful-text" id="helpful-text-${s.id}">${helpfulLabel}</span>
-                </button>
-              </div>
-            </div>`;
-          }).join('')
-        : `<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`;
+    container.innerHTML=list.map((p,i)=>{
+      const sols=[...(p.solutions||[])].sort((a,b)=>(b.helpful_count||0)-(a.helpful_count||0));
+      const solCount=sols.length;
+      const m=metooed[p.id];
+      const chip=authorChipHTML(p.author_name,p.author_avatar,p.author_avatar_type,p.author_avatar_data);
+      const solsHTML=sols.length>0
+        ?sols.map((s,idx)=>{
+          const alreadyVoted=helpfulVoted[s.id];
+          const hCount=s.helpful_count||0;
+          const helpfulLabel=hCount>0?hCount+' '+(hCount===1?'person found':'people found')+' this helpful':'Was this helpful?';
+          const solChip=s.author_name&&s.author_name!=='Anonymous'
+            ?`<div class="sol-author"><div class="sol-author-avatar" style="font-size:11px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${s.author_name}</span></div>`:'';
+          return `<div class="solution-item">
+            <div class="solution-num">${idx+1}</div>
+            <div class="solution-body">
+              ${solChip}
+              <div class="solution-box">"${s.text}"</div>
+              <button class="helpful-btn${alreadyVoted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
+                <span class="helpful-icon">👍</span>
+                <span class="helpful-text" id="helpful-text-${s.id}">${helpfulLabel}</span>
+              </button>
+            </div>
+          </div>`;
+        }).join('')
+        :`<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first to help!</div>`;
       return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*50}ms">
         <div class="card-top">
           <div class="card-body">
             <div class="card-cat">${p.category}</div>
+            ${chip}
             <div class="card-text">${p.text}</div>
             <div class="card-meta">
               <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
@@ -732,159 +893,160 @@
               <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>
             </div>
           </div>
-          <button class="metoo-btn ${m?'active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
+          <button class="metoo-btn${m?' active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
             <span class="metoo-icon">${m?'🔥':'👆'}</span>
             <span class="metoo-count" id="count-${p.id}">${(p.metoo_count||0).toLocaleString()}</span>
             <span class="metoo-label">${m?'same!':'me too'}</span>
           </button>
         </div>
         <div class="card-expanded">
-          <div class="solution-label">✦ ${solCount > 0 ? solCount+' Solution'+(solCount!==1?'s':'')+' — ranked by helpfulness' : 'No Solutions Yet'}</div>
+          <div class="solution-label">✦ ${solCount>0?solCount+' Solution'+(solCount!==1?'s':'')+' — ranked by helpfulness':'No Solutions Yet'}</div>
           ${solsHTML}
-          <div class="solution-actions" style="margin-top:14px;">
-            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id}, \`${p.text.replace(/`/g,"'")}\`)">+ Add your solution</button>
+          <div class="solution-actions">
+            <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id},\`${p.text.replace(/`/g,"'")}\`)">+ Add your solution</button>
           </div>
         </div>
       </div>`;
     }).join('');
   }
 
-  function toggleCard(id) {
-    const card = document.getElementById('card-'+id);
-    const toggle = document.getElementById('toggle-'+id);
-    toggle.textContent = card.classList.toggle('expanded') ? 'Hide ↑' : 'See solutions ↓';
+  function toggleCard(id){
+    const card=document.getElementById('card-'+id);
+    const toggle=document.getElementById('toggle-'+id);
+    toggle.textContent=card.classList.toggle('expanded')?'Hide ↑':'See solutions ↓';
   }
 
-  async function doMeToo(id) {
-    if (metooed[id]) { showToast('You already said Me Too on this one!'); return; }
-    metooed[id] = true;
-    localStorage.setItem('sp_metooed', JSON.stringify(metooed));
-    const p = allProblems.find(x => x.id===id);
-    if (!p) return;
-    p.metoo_count = (p.metoo_count||0)+1;
-    const btn = document.getElementById('btn-'+id);
+  async function doMeToo(id){
+    if(metooed[id]){showToast('You already said Me Too on this one!');return;}
+    metooed[id]=true;
+    localStorage.setItem('sp_metooed',JSON.stringify(metooed));
+    const p=allProblems.find(x=>x.id===id);
+    if(!p)return;
+    p.metoo_count=(p.metoo_count||0)+1;
+    const btn=document.getElementById('btn-'+id);
     btn.classList.add('active');
-    btn.querySelector('.metoo-icon').textContent = '🔥';
-    btn.querySelector('.metoo-label').textContent = 'same!';
-    document.getElementById('count-'+id).textContent = p.metoo_count.toLocaleString();
+    btn.querySelector('.metoo-icon').textContent='🔥';
+    btn.querySelector('.metoo-label').textContent='same!';
+    document.getElementById('count-'+id).textContent=p.metoo_count.toLocaleString();
     updateStats();
-    await db.from('problems').update({ metoo_count:p.metoo_count }).eq('id',id);
+    await db.from('problems').update({metoo_count:p.metoo_count}).eq('id',id);
     showToast('🔥 Me Too counted! You are not alone.');
   }
 
-  let helpfulVoted = JSON.parse(localStorage.getItem('sp_helpful') || '{}');
-
-  async function markHelpful(solId, problemId) {
-    if (helpfulVoted[solId]) { showToast('You already marked this as helpful!'); return; }
-
-    // Immediately disable button to prevent double clicks
-    const btn = document.getElementById('helpful-'+solId);
-    if (btn) btn.classList.add('voted');
-
-    // First fetch current count directly from DB to avoid stale data
-    const { data: fresh } = await db.from('solutions').select('helpful_count').eq('id', solId).single();
-    const currentCount = (fresh?.helpful_count || 0);
-    const newCount = currentCount + 1;
-
-    // Save vote to localStorage
-    helpfulVoted[solId] = true;
-    localStorage.setItem('sp_helpful', JSON.stringify(helpfulVoted));
-
-    // Update DB with correct count
-    await db.from('solutions').update({ helpful_count: newCount }).eq('id', solId);
-
-    // Update local data
-    const p = allProblems.find(x => x.id===problemId);
-    if (p && p.solutions) {
-      const sol = p.solutions.find(s => s.id===solId);
-      if (sol) sol.helpful_count = newCount;
-    }
-
-    // Update UI
-    const textEl = document.getElementById('helpful-text-'+solId);
-    if (textEl) textEl.textContent = newCount+' '+(newCount===1?'person found':'people found')+' this helpful';
-
-    showToast('👍 Marked as helpful! Thank you.');
+  async function markHelpful(solId,problemId){
+    if(helpfulVoted[solId]){showToast('You already marked this as helpful!');return;}
+    const btn=document.getElementById('helpful-'+solId);
+    if(btn)btn.classList.add('voted');
+    const{data:fresh}=await db.from('solutions').select('helpful_count').eq('id',solId).single();
+    const newCount=(fresh?.helpful_count||0)+1;
+    helpfulVoted[solId]=true;
+    localStorage.setItem('sp_helpful',JSON.stringify(helpfulVoted));
+    await db.from('solutions').update({helpful_count:newCount}).eq('id',solId);
+    const p=allProblems.find(x=>x.id===problemId);
+    if(p&&p.solutions){const s=p.solutions.find(x=>x.id===solId);if(s)s.helpful_count=newCount;}
+    const textEl=document.getElementById('helpful-text-'+solId);
+    if(textEl)textEl.textContent=newCount+' '+(newCount===1?'person found':'people found')+' this helpful';
+    showToast('👍 Marked as helpful!');
   }
 
-  function doSearch() {
-    const q = document.getElementById('searchInput').value.trim();
-    const result = document.getElementById('searchResult');
-    if (!q) { result.classList.remove('show'); render(); return; }
-    const matching = allProblems.filter(p => p.text.toLowerCase().includes(q.toLowerCase()));
-    const total = matching.reduce((s,p) => s+(p.metoo_count||0),0);
-    document.getElementById('resultCount').textContent = (total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
+  function doSearch(){
+    const q=document.getElementById('searchInput').value.trim();
+    const result=document.getElementById('searchResult');
+    if(!q){result.classList.remove('show');render();return;}
+    const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
+    const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
+    document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
     result.classList.add('show');
     render();
   }
 
-  document.getElementById('searchInput').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
-  document.getElementById('searchInput').addEventListener('input', () => { document.getElementById('searchResult').classList.remove('show'); render(); });
-  function fillSearch(el) { document.getElementById('searchInput').value=el.textContent; doSearch(); }
-  function filterCat(btn,cat) { activeCat=cat; document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }
+  document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+  document.getElementById('searchInput').addEventListener('input',()=>{document.getElementById('searchResult').classList.remove('show');render();});
+  function fillSearch(el){document.getElementById('searchInput').value=el.textContent;doSearch();}
+  function filterCat(btn,cat){activeCat=cat;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');render();}
 
-  function openModal() { document.getElementById('modalOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
-  function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
-  function closeModalOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
-
-  // --- Solution Modal ---
-  let currentSolutionProblemId = null;
-  function openSolutionModal(problemId, problemText) {
-    currentSolutionProblemId = problemId;
-    document.getElementById('solutionProblemTitle').textContent = problemText;
-    document.getElementById('solutionText').value = '';
-    document.getElementById('solutionOverlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeSolutionModal() {
-    document.getElementById('solutionOverlay').classList.remove('open');
-    document.body.style.overflow = '';
-    currentSolutionProblemId = null;
-  }
-  function closeSolutionOutside(e) { if(e.target===document.getElementById('solutionOverlay')) closeSolutionModal(); }
-
-  async function submitSolution() {
-    const text = document.getElementById('solutionText').value.trim();
-    if (!text) { showToast('Please describe your solution first.'); return; }
-    if (!currentSolutionProblemId) return;
-    const btn = document.getElementById('solutionSubmitBtn');
-    btn.disabled = true; btn.textContent = 'Submitting...';
-    const { error } = await db.from('solutions').insert({ problem_id: currentSolutionProblemId, text, helpful_count: 0 });
-    if (error) { btn.disabled=false; btn.textContent='Submit Solution →'; showToast('Something went wrong. Please try again.'); return; }
-    // update solution_count on problem
-    const p = allProblems.find(x => x.id===currentSolutionProblemId);
-    if (p) {
-      p.solution_count = (p.solution_count||0)+1;
-      if (!p.solutions) p.solutions = [];
-      p.solutions.push({ text, helpful_count:0 });
-      await db.from('problems').update({ solution_count: p.solution_count }).eq('id', currentSolutionProblemId);
-    }
-    btn.disabled=false; btn.textContent='Submit Solution →';
-    closeSolutionModal();
-    render();
-    showToast('✅ Solution added! Thank you for helping others.');
+  function showPage(name){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+name).classList.add('active');
+    document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active-nav'));
+    const nl=document.getElementById('nav-'+name);
+    if(nl)nl.classList.add('active-nav');
+    window.scrollTo(0,0);
   }
 
-  async function submitProblem() {
-    const text = document.getElementById('problemText').value.trim();
-    const category = document.getElementById('problemCat').value;
-    if (!text) { showToast('Please describe your problem first.'); return; }
-    const btn = document.getElementById('submitBtn');
-    btn.disabled=true; btn.textContent='Submitting...';
-    const { data, error } = await db.from('problems').insert({ text, category, metoo_count:1, solution_count:0 }).select().single();
-    btn.disabled=false; btn.textContent='Submit Anonymously →';
-    if (error) { showToast('Something went wrong. Please try again.'); return; }
+  function openModal(){
+    updatePostingAs();
+    document.getElementById('modalOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
+  function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
+
+  async function submitProblem(){
+    const text=document.getElementById('problemText').value.trim();
+    const category=document.getElementById('problemCat').value;
+    if(!text){showToast('Please describe your problem first.');return;}
+    const btn=document.getElementById('submitBtn');
+    btn.disabled=true;btn.textContent='Submitting...';
+    const{data,error}=await db.from('problems').insert({
+      text,category,metoo_count:1,solution_count:0,
+      author_name:getDisplayName(),
+      author_avatar:getAvatar(),
+      author_avatar_type:identity?.avatarType||'emoji',
+      author_avatar_data:isPhotoAvatar()?identity.avatarData:null
+    }).select().single();
+    btn.disabled=false;btn.textContent='Submit →';
+    if(error){showToast('Something went wrong. Please try again.');return;}
     closeModal();
     document.getElementById('problemText').value='';
     allProblems.unshift(data);
     updateStats();
     render();
-    showToast('✅ Shared anonymously! Thank you for helping others feel less alone.');
+    showToast('✅ Problem shared! Thank you.');
   }
 
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent=msg; t.classList.add('show');
+  let currentSolutionProblemId=null;
+  function openSolutionModal(problemId,problemText){
+    currentSolutionProblemId=problemId;
+    document.getElementById('solutionProblemTitle').textContent=problemText;
+    document.getElementById('solutionText').value='';
+    updatePostingAs();
+    document.getElementById('solutionOverlay').classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeSolutionModal(){document.getElementById('solutionOverlay').classList.remove('open');document.body.style.overflow='';currentSolutionProblemId=null;}
+  function closeSolutionOutside(e){if(e.target===document.getElementById('solutionOverlay'))closeSolutionModal();}
+
+  async function submitSolution(){
+    const text=document.getElementById('solutionText').value.trim();
+    if(!text){showToast('Please describe your solution first.');return;}
+    if(!currentSolutionProblemId)return;
+    const btn=document.getElementById('solutionSubmitBtn');
+    btn.disabled=true;btn.textContent='Submitting...';
+    const{error}=await db.from('solutions').insert({
+      problem_id:currentSolutionProblemId,text,helpful_count:0,
+      author_name:getDisplayName(),
+      author_avatar:getAvatar(),
+      author_avatar_type:identity?.avatarType||'emoji',
+      author_avatar_data:isPhotoAvatar()?identity.avatarData:null
+    });
+    if(error){btn.disabled=false;btn.textContent='Submit Solution →';showToast('Something went wrong. Please try again.');return;}
+    const p=allProblems.find(x=>x.id===currentSolutionProblemId);
+    if(p){
+      p.solution_count=(p.solution_count||0)+1;
+      if(!p.solutions)p.solutions=[];
+      p.solutions.push({id:Date.now(),text,helpful_count:0,author_name:getDisplayName(),author_avatar:getAvatar(),author_avatar_type:identity?.avatarType,author_avatar_data:isPhotoAvatar()?identity.avatarData:null});
+      await db.from('problems').update({solution_count:p.solution_count}).eq('id',currentSolutionProblemId);
+    }
+    btn.disabled=false;btn.textContent='Submit Solution →';
+    closeSolutionModal();
+    render();
+    showToast('✅ Solution added! Thank you for helping others.');
+  }
+
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg;t.classList.add('show');
     setTimeout(()=>t.classList.remove('show'),3500);
   }
 
