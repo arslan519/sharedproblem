@@ -403,8 +403,10 @@
         position:relative;z-index:100;pointer-events:auto;
         -webkit-tap-highlight-color:rgba(251,146,60,0.25);
       }
-      .sidebar-left .cat-icon{font-size:18px;pointer-events:none;}
-      .sidebar-left .cat-count{pointer-events:none;}
+      .sidebar-left .cat-icon{font-size:18px;}
+      .sidebar-left .cat-count{}
+      /* Make every descendant of cat-item also a non-blocker for taps */
+      .sidebar-left .cat-item *{pointer-events:none;}
       .about-values{grid-template-columns:1fr;}
       .footer-top{flex-direction:column;gap:24px;}
     }
@@ -1215,19 +1217,34 @@ function backdropCloseHandler(event){
 }
 
 // Single category-click pipeline.
-// Order matters on mobile: close the drawer FIRST (so body.drawer-open's overflow:hidden
-// is released), THEN filter and reset scroll. Without this, iOS Safari can keep the page
-// visually locked during the close animation and the filtered feed never appears in view.
-function handleCatClick(el,cat){
-  closeMobileDrawer();
-  filterCat(el,cat);
-  // Hard, immediate scroll-to-top — works even on browsers that ignore smooth scroll
-  document.documentElement.scrollTop=0;
-  document.body.scrollTop=0;
-  window.scrollTo(0,0);
+// Toast fires FIRST so we can confirm the handler actually runs. If the drawer closes
+// without a toast appearing, the click is being consumed elsewhere and never reaches us.
+function handleCatClick(el,cat,evt){
+  if(evt){evt.preventDefault&&evt.preventDefault();evt.stopPropagation&&evt.stopPropagation();}
   showToast('Showing: '+cat);
+  try{
+    closeMobileDrawer();
+    filterCat(el,cat);
+    document.documentElement.scrollTop=0;
+    document.body.scrollTop=0;
+    window.scrollTo(0,0);
+  }catch(err){
+    showToast('Filter error: '+(err&&err.message?err.message:err));
+  }
 }
 function closeMobileDrawer(){closeDrawer();}
+
+// Backup: programmatic delegated listener — fires even if the inline onclick is somehow stripped/blocked.
+document.addEventListener('click',function(e){
+  const item=e.target.closest('.cat-item');
+  if(!item)return;
+  // If the element actually had its inline onclick fire, this will still run a second time;
+  // filterCat is idempotent so re-running with the same activeCat is a no-op visually.
+  if(item.dataset && item.dataset.cat){
+    e.stopPropagation();
+    handleCatClick(item,item.dataset.cat,e);
+  }
+},true);
 
 function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
