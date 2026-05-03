@@ -397,10 +397,10 @@
       .nav-links{display:none;}
       .hamburger-btn{display:inline-flex;align-items:center;justify-content:center;}
       /* Bigger touch targets in drawer + explicit click-priority */
-      .sidebar-left .cat-list{gap:6px;position:relative;z-index:2;pointer-events:auto;}
+      .sidebar-left .cat-list{gap:6px;position:relative;z-index:50;pointer-events:auto;}
       .sidebar-left .cat-item{
         padding:14px 14px;font-size:14px;min-height:48px;
-        position:relative;z-index:3;pointer-events:auto;
+        position:relative;z-index:100;pointer-events:auto;
         -webkit-tap-highlight-color:rgba(251,146,60,0.25);
       }
       .sidebar-left .cat-icon{font-size:18px;pointer-events:none;}
@@ -493,12 +493,12 @@
       <div class="sidebar-card">
         <div class="sidebar-title">Topics</div>
         <div class="cat-list" id="catList">
-          <div class="cat-item" data-cat="Work" onclick="event.stopPropagation();filterCat(this,'Work')"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></div>
-          <div class="cat-item" data-cat="Health" onclick="event.stopPropagation();filterCat(this,'Health')"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></div>
-          <div class="cat-item" data-cat="Home" onclick="event.stopPropagation();filterCat(this,'Home')"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></div>
-          <div class="cat-item" data-cat="Money" onclick="event.stopPropagation();filterCat(this,'Money')"><span class="cat-icon">💰</span>Money<span class="cat-count" id="cnt-Money"></span></div>
-          <div class="cat-item" data-cat="Tech" onclick="event.stopPropagation();filterCat(this,'Tech')"><span class="cat-icon">💻</span>Tech<span class="cat-count" id="cnt-Tech"></span></div>
-          <div class="cat-item" data-cat="Relationships" onclick="event.stopPropagation();filterCat(this,'Relationships')"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></div>
+          <div class="cat-item" data-cat="Work" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Work')"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></div>
+          <div class="cat-item" data-cat="Health" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Health')"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></div>
+          <div class="cat-item" data-cat="Home" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Home')"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></div>
+          <div class="cat-item" data-cat="Money" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Money')"><span class="cat-icon">💰</span>Money<span class="cat-count" id="cnt-Money"></span></div>
+          <div class="cat-item" data-cat="Tech" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Tech')"><span class="cat-icon">💻</span>Tech<span class="cat-count" id="cnt-Tech"></span></div>
+          <div class="cat-item" data-cat="Relationships" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Relationships')"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></div>
         </div>
       </div>
 
@@ -774,7 +774,7 @@
   </div>
 </div>
 
-<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1175,8 +1175,6 @@ function filterCat(el,cat){
   render();
   // Scroll feed to top so user clearly sees the new filtered list
   window.scrollTo({top:0,behavior:'smooth'});
-  // Brief delay so the user sees the highlight before drawer slides away
-  setTimeout(closeDrawer,180);
 }
 
 function filterCatMobile(el,cat){
@@ -1213,6 +1211,18 @@ function toggleDrawer(){
   const sl=document.getElementById('sidebarLeft');
   if(sl.classList.contains('drawer-open'))closeDrawer();else openDrawer();
 }
+// Backdrop / overlay close handler — bails out if the click originated inside the category list
+function backdropCloseHandler(event){
+  if(event.target.closest('.cat-list'))return;
+  closeDrawer();
+}
+
+// Single category-click pipeline: filter THEN close drawer
+function handleCatClick(el,cat){
+  filterCat(el,cat);          // 1. apply filter
+  closeMobileDrawer();        // 2. close the drawer
+}
+function closeMobileDrawer(){closeDrawer();}
 
 function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
