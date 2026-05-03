@@ -529,6 +529,7 @@
       <div class="sidebar-card">
         <div class="sidebar-title">Topics</div>
         <div class="cat-list" id="catList">
+          <button type="button" class="cat-item mobile-cat-link active active-cat" data-cat="All" data-category="All"><span class="cat-icon">🌐</span>All Topics<span class="cat-count" id="cnt-All"></span></button>
           <button type="button" class="cat-item mobile-cat-link" data-cat="Work" data-category="Work"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></button>
           <button type="button" class="cat-item mobile-cat-link" data-cat="Health" data-category="Health"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></button>
           <button type="button" class="cat-item mobile-cat-link" data-cat="Home" data-category="Home"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></button>
@@ -1072,11 +1073,11 @@ function updateStats(){
 }
 
 function updateCatCounts(){
-  const cats=['Work','Health','Home','Money','Tech','Relationships'];
+  const cats=['All','Work','Health','Home','Money','Tech','Relationships'];
   cats.forEach(cat=>{
     const el=document.getElementById('cnt-'+cat);
     if(!el)return;
-    el.textContent=allProblems.filter(p=>p.category===cat).length;
+    el.textContent=cat==='All'?allProblems.length:allProblems.filter(p=>p.category===cat).length;
   });
 }
 
