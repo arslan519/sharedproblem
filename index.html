@@ -222,52 +222,57 @@
     .card:hover{border-color:var(--border2);background:var(--surface2);transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,0.3);}
     .card:hover::before{opacity:1;}
     .card.expanded{background:rgba(251,146,60,0.04);border-color:var(--orange-border);}
-    .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
-    .card-body{flex:1;min-width:0;}
+    .card-top{display:block;}
+    .card-body{min-width:0;}
     .card-cat{font-size:9px;font-family:'DM Mono',monospace;font-weight:500;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:5px;}
-    .author-chip{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap;}
-    .timestamp{font-family:'DM Mono',monospace;font-size:0.75rem;color:#888;}
-    .timestamp-sep{font-family:'DM Mono',monospace;font-size:0.75rem;color:#555;margin:0 2px;}
+    .author-chip{display:inline-flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+    .timestamp{font-family:'DM Mono',monospace;font-size:0.72rem;color:#777;}
+    .timestamp-sep{font-family:'DM Mono',monospace;font-size:0.72rem;color:#444;margin:0 2px;}
     .author-avatar-sm{width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
     .author-avatar-sm img{width:100%;height:100%;object-fit:cover;}
-    .author-name-sm{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
-    .card-text{font-size:14px;line-height:1.6;color:var(--text);margin-bottom:12px;}
-    .card-meta{display:flex;align-items:center;gap:12px;}
-    .card-meta-item{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.3);}
-    .card-meta-dot{color:rgba(255,255,255,0.12);}
-    .metoo-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:66px;flex-shrink:0;}
-    .metoo-btn:hover{background:var(--orange-dim);border-color:var(--orange-border);transform:scale(1.04);}
-    .metoo-btn.active{background:var(--orange-dim);border-color:rgba(251,146,60,0.45);animation:glow 2s ease-in-out infinite;}
-    .metoo-icon{font-size:18px;}
-    .metoo-count{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.55);transition:all 0.2s;display:inline-block;}
+    .author-name-sm{font-size:11px;font-family:'DM Mono',monospace;color:#888;}
+    .card-text{font-size:15.5px;line-height:1.55;color:var(--text);margin-bottom:12px;font-weight:500;letter-spacing:-0.1px;}
+    .card-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .card-meta-item{font-size:11px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.35);}
+    .card-meta-dot{color:rgba(255,255,255,0.15);font-size:11px;}
+    /* Me Too is now an inline ghost-style action button in the meta row */
+    .metoo-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 11px;cursor:pointer;transition:all 0.2s;font-family:'DM Mono',monospace;flex-shrink:0;}
+    .metoo-btn:hover{background:var(--orange-dim);border-color:var(--orange-border);}
+    .metoo-btn.active{background:var(--orange-dim);border-color:rgba(251,146,60,0.45);}
+    .metoo-icon{font-size:13px;line-height:1;}
+    .metoo-count{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);transition:all 0.2s;display:inline-block;}
     .metoo-btn.active .metoo-count{color:var(--orange);}
     @keyframes countPop{0%{transform:scale(1);}40%{transform:scale(1.45);color:var(--orange);}100%{transform:scale(1);}}
     .metoo-count.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
     .stat-row-val.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);display:inline-block;}
-    .metoo-label{font-size:9px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.25);}
+    .metoo-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
     .metoo-btn.active .metoo-label{color:var(--orange);}
 
-    /* Card expanded */
-    .card-expanded{display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);}
+    /* Card expanded — tighter spacing for compact feel */
+    .card-expanded{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
     .card.expanded .card-expanded{display:block;animation:fadeUp 0.3s ease;}
-    .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:10px;}
-    .solution-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;}
+    .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
+    .solution-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
     .solution-num{width:18px;height:18px;min-width:18px;background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);font-weight:600;margin-top:2px;}
     .solution-body{flex:1;}
-    .sol-author{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+    .sol-author{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap;}
     .sol-author-avatar{width:16px;height:16px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
     .sol-author-avatar img{width:100%;height:100%;object-fit:cover;}
-    .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
-    .solution-box{background:rgba(251,146,60,0.05);border:1px solid rgba(251,146,60,0.1);border-left:3px solid rgba(251,146,60,0.4);border-radius:0 9px 9px 0;padding:11px 13px;font-size:13px;line-height:1.65;color:rgba(255,255,255,0.7);font-style:italic;margin-bottom:7px;}
-    .helpful-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all 0.2s;}
-    .helpful-btn:hover{border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.05);}
-    .helpful-btn.voted{border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.07);cursor:default;pointer-events:none;}
+    .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:#888;}
+    /* Solution body — flat, just a left rule. No background, no full border. */
+    .solution-box{background:none;border:none;border-left:2px solid var(--orange);border-radius:0;padding:2px 0 2px 12px;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
+    /* Ghost-style helpful button */
+    .helpful-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all 0.2s;}
+    .helpful-btn:hover{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);}
+    .helpful-btn.voted{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);cursor:default;pointer-events:none;}
     .helpful-icon{font-size:11px;}
     .helpful-text{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
-    .solution-actions{margin-top:12px;}
-    .sol-btn{border-radius:8px;padding:7px 13px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
-    .sol-btn-ghost{background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--muted);}
-    .sol-btn-ghost:hover{border-color:var(--border2);color:var(--text2);}
+    .helpful-btn:hover .helpful-text,.helpful-btn.voted .helpful-text{color:var(--green);}
+    .solution-actions{margin-top:10px;}
+    .sol-btn{border-radius:8px;padding:6px 12px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
+    /* Ghost-style add-solution button */
+    .sol-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+    .sol-btn-ghost:hover{border-color:var(--orange-border);color:var(--orange);background:transparent;}
 
     /* Loading / Empty */
     .loading{text-align:center;padding:48px 20px;}
@@ -1150,22 +1155,18 @@ function render(){
     const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
     const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
     return `<div class="card${isSingle?' expanded':''}" id="card-${p.id}" ${cardOnclick} style="animation-delay:${i*45}ms">
-      <div class="card-top">
-        <div class="card-body">
-          <div class="card-cat">${p.category}</div>
-          ${chip}
-          <div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>
-          <div class="card-meta">
-            <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
-            ${isSingle?'':`<span class="card-meta-dot"> · </span>
-            <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>`}
-          </div>
-        </div>
+      <div class="card-cat">${p.category}</div>
+      ${chip}
+      <div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>
+      <div class="card-meta">
         <button class="metoo-btn${m?' active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
           <span class="metoo-icon">${m?'🔥':'👆'}</span>
           <span class="metoo-count" id="count-${p.id}">${(p.metoo_count||0).toLocaleString()}</span>
           <span class="metoo-label">${m?'same!':'me too'}</span>
         </button>
+        <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
+        ${isSingle?'':`<span class="card-meta-dot">·</span>
+        <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>`}
       </div>
       <div class="card-expanded">
         <div class="solution-label">✦ ${solCount>0?solCount+' Solution'+(solCount!==1?'s':'')+' — ranked by helpfulness':'No Solutions Yet'}</div>
