@@ -142,16 +142,19 @@
       color:rgba(255,255,255,0.25);letter-spacing:2px;text-transform:uppercase;
       margin-bottom:14px;
     }
-    .cat-list{display:flex;flex-direction:column;gap:4px;}
+    /* Tag-cloud sidebar — flex-wrap pills */
+    .cat-list{display:flex;flex-wrap:wrap;gap:6px;}
     .cat-item{
-      display:flex;align-items:center;gap:10px;
-      padding:9px 12px;border-radius:10px;
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 11px;border-radius:100px;
       cursor:pointer;transition:all 0.18s;
-      border:1px solid transparent;
-      font-size:13px;color:var(--text2);
+      border:1px solid var(--border);
+      font-size:11.5px;color:var(--text2);
       font-family:'DM Mono',monospace;
+      background:rgba(255,255,255,0.025);
+      white-space:nowrap;
     }
-    .cat-item:hover{background:var(--surface2);color:var(--text);}
+    .cat-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border2);}
     .cat-item.active,.cat-item.active-cat{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
     /* Force-fix: guarantee mobile category buttons are the top-most clickable layer */
     .mobile-cat-link{
@@ -162,8 +165,9 @@
       width:100%;text-align:left;font:inherit;color:inherit;
       background:transparent;border:1px solid transparent;
     }
-    .cat-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
-    .cat-count{font-size:10px;color:var(--muted);margin-left:auto;font-family:'DM Mono',monospace;}
+    .cat-icon{font-size:13px;line-height:1;flex-shrink:0;}
+    .cat-count{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;background:rgba(255,255,255,0.05);padding:1px 6px;border-radius:100px;}
+    .cat-item.active .cat-count,.cat-item.active-cat .cat-count{background:rgba(251,146,60,0.15);color:var(--orange);}
 
     /* ── CENTER FEED ─────────────────────── */
     .feed{min-width:0;}/* prevents grid blowout */
@@ -447,15 +451,14 @@
       .mobile-cats{display:none;}/* hidden — categories now live in the drawer only */
       .nav-links{display:none;}
       .hamburger-btn{display:inline-flex;align-items:center;justify-content:center;}
-      /* Bigger touch targets in drawer + explicit click-priority */
-      .sidebar-left .cat-list{gap:6px;position:relative;z-index:50;pointer-events:auto;}
+      /* Pill targets in drawer — bigger taps but still tag-cloud feel */
+      .sidebar-left .cat-list{gap:8px;position:relative;z-index:50;pointer-events:auto;}
       .sidebar-left .cat-item{
-        padding:14px 14px;font-size:14px;min-height:48px;
+        padding:9px 14px;font-size:13px;min-height:36px;
         position:relative;z-index:100;pointer-events:auto;
         -webkit-tap-highlight-color:rgba(251,146,60,0.25);
       }
-      .sidebar-left .cat-icon{font-size:18px;}
-      .sidebar-left .cat-count{}
+      .sidebar-left .cat-icon{font-size:14px;}
       /* Make every descendant of cat-item also a non-blocker for taps */
       .sidebar-left .cat-item *{pointer-events:none;}
       .about-values{grid-template-columns:1fr;}
@@ -548,13 +551,18 @@
       <div class="sidebar-card">
         <div class="sidebar-title">Topics</div>
         <div class="cat-list" id="catList">
-          <button type="button" class="cat-item mobile-cat-link active active-cat" data-cat="All" data-category="All"><span class="cat-icon">🌐</span>All Topics<span class="cat-count" id="cnt-All"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Work" data-category="Work"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Health" data-category="Health"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Home" data-category="Home"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Money" data-category="Money"><span class="cat-icon">💰</span>Money<span class="cat-count" id="cnt-Money"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Tech" data-category="Tech"><span class="cat-icon">💻</span>Tech<span class="cat-count" id="cnt-Tech"></span></button>
-          <button type="button" class="cat-item mobile-cat-link" data-cat="Relationships" data-category="Relationships"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></button>
+          <button type="button" class="cat-item mobile-cat-link active active-cat" data-cat="All" data-category="All"><span class="cat-icon">🌐</span>All<span class="cat-count" id="cnt-All"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Burnout" data-category="Burnout"><span class="cat-icon">🔥</span>Burnout<span class="cat-count" id="cnt-Burnout"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Career" data-category="Career"><span class="cat-icon">💼</span>Career<span class="cat-count" id="cnt-Career"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Mental Health" data-category="Mental Health"><span class="cat-icon">🧠</span>Mental Health<span class="cat-count" id="cnt-MentalHealth"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Sleep" data-category="Sleep"><span class="cat-icon">😴</span>Sleep<span class="cat-count" id="cnt-Sleep"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Debt" data-category="Debt"><span class="cat-icon">💰</span>Debt<span class="cat-count" id="cnt-Debt"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Side Hustle" data-category="Side Hustle"><span class="cat-icon">🚀</span>Side Hustle<span class="cat-count" id="cnt-SideHustle"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Loneliness" data-category="Loneliness"><span class="cat-icon">💭</span>Loneliness<span class="cat-count" id="cnt-Loneliness"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Dating" data-category="Dating"><span class="cat-icon">💕</span>Dating<span class="cat-count" id="cnt-Dating"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Habits" data-category="Habits"><span class="cat-icon">🔄</span>Habits<span class="cat-count" id="cnt-Habits"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Productivity" data-category="Productivity"><span class="cat-icon">⚡</span>Productivity<span class="cat-count" id="cnt-Productivity"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Self-Doubt" data-category="Self-Doubt"><span class="cat-icon">🤔</span>Self-Doubt<span class="cat-count" id="cnt-SelfDoubt"></span></button>
         </div>
       </div>
 
@@ -772,10 +780,18 @@
     <textarea id="problemText" placeholder="Be specific — e.g. My manager takes credit for my work in meetings..."></textarea>
     <label>Category</label>
     <select id="problemCat">
-      <option value="Work">Work</option><option value="Health">Health</option>
-      <option value="Home">Home</option><option value="Money">Money</option>
-      <option value="Tech">Tech</option><option value="Relationships">Relationships</option>
-      <option value="Other">Other</option>
+      <option value="Burnout">Burnout</option>
+      <option value="Career">Career</option>
+      <option value="Mental Health">Mental Health</option>
+      <option value="Sleep">Sleep</option>
+      <option value="Debt">Debt</option>
+      <option value="Side Hustle">Side Hustle</option>
+      <option value="Loneliness">Loneliness</option>
+      <option value="Dating">Dating</option>
+      <option value="Habits">Habits</option>
+      <option value="Productivity">Productivity</option>
+      <option value="Self-Doubt">Self-Doubt</option>
+      <option value="General">General</option>
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
@@ -1091,12 +1107,28 @@ function updateStats(){
   fetchStats();
 }
 
+// Single source of truth for the active category list
+const KNOWN_CATEGORIES=['Burnout','Career','Mental Health','Sleep','Debt','Side Hustle','Loneliness','Dating','Habits','Productivity','Self-Doubt'];
+const CATEGORY_FALLBACK='General';
+
+// Catch-all: if a problem has an old/unknown category (e.g. legacy "Work"),
+// show "General" in the UI so the card never looks broken.
+function displayCategory(cat){
+  if(!cat)return CATEGORY_FALLBACK;
+  return KNOWN_CATEGORIES.includes(cat)?cat:CATEGORY_FALLBACK;
+}
+
 function updateCatCounts(){
-  const cats=['All','Work','Health','Home','Money','Tech','Relationships'];
-  cats.forEach(cat=>{
-    const el=document.getElementById('cnt-'+cat);
+  // ID-safe key (strip spaces/dashes) for elements like cnt-MentalHealth, cnt-SideHustle, cnt-SelfDoubt
+  const idFor=cat=>'cnt-'+cat.replace(/[\s-]/g,'');
+  // "All" counter
+  const allEl=document.getElementById('cnt-All');
+  if(allEl)allEl.textContent=allProblems.length;
+  // Per-category counters
+  KNOWN_CATEGORIES.forEach(cat=>{
+    const el=document.getElementById(idFor(cat));
     if(!el)return;
-    el.textContent=cat==='All'?allProblems.length:allProblems.filter(p=>p.category===cat).length;
+    el.textContent=allProblems.filter(p=>p.category===cat).length;
   });
 }
 
@@ -1155,7 +1187,7 @@ function render(){
     const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
     const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
     return `<div class="card${isSingle?' expanded':''}" id="card-${p.id}" ${cardOnclick} style="animation-delay:${i*45}ms">
-      <div class="card-cat">${p.category}</div>
+      <div class="card-cat">${displayCategory(p.category)}</div>
       ${chip}
       <div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>
       <div class="card-meta">
