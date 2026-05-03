@@ -168,7 +168,9 @@
     .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
     .card-body{flex:1;min-width:0;}
     .card-cat{font-size:9px;font-family:'DM Mono',monospace;font-weight:500;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:5px;}
-    .author-chip{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;}
+    .author-chip{display:inline-flex;align-items:center;gap:5px;margin-bottom:7px;flex-wrap:wrap;}
+    .timestamp{font-family:'DM Mono',monospace;font-size:0.75rem;color:#888;}
+    .timestamp-sep{font-family:'DM Mono',monospace;font-size:0.75rem;color:#555;margin:0 2px;}
     .author-avatar-sm{width:20px;height:20px;border-radius:50%;font-size:12px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
     .author-avatar-sm img{width:100%;height:100%;object-fit:cover;}
     .author-name-sm{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
@@ -853,11 +855,31 @@ let activeCat='All';
 let metooed=JSON.parse(localStorage.getItem('sp_metooed')||'{}');
 let helpfulVoted=JSON.parse(localStorage.getItem('sp_helpful')||'{}');
 
-function authorChipHTML(name,avatar,avatarType,avatarData){
+function getRelativeTime(dateString){
+  if(!dateString)return'';
+  const then=new Date(dateString).getTime();
+  if(isNaN(then))return'';
+  const diff=Math.max(0,Date.now()-then);
+  const s=Math.floor(diff/1000);
+  if(s<45)return'just now';
+  const m=Math.floor(s/60);
+  if(m<60)return m+'m ago';
+  const h=Math.floor(m/60);
+  if(h<24)return h+'h ago';
+  const d=Math.floor(h/24);
+  if(d<30)return d+'d ago';
+  const mo=Math.floor(d/30);
+  if(mo<12)return mo+'mo ago';
+  return Math.floor(d/365)+'y ago';
+}
+
+function authorChipHTML(name,avatar,avatarType,avatarData,createdAt){
   let avatarEl=avatarType==='photo'&&avatarData
     ?`<div class="author-avatar-sm"><img src="${avatarData}" alt=""/></div>`
     :`<div class="author-avatar-sm" style="font-size:12px;">${avatar||'🌀'}</div>`;
-  return `<div class="author-chip">${avatarEl}<span class="author-name-sm">${name||'Anonymous'}</span></div>`;
+  const ts=getRelativeTime(createdAt);
+  const tsHTML=ts?`<span class="timestamp-sep">•</span><span class="timestamp">${ts}</span>`:'';
+  return `<div class="author-chip">${avatarEl}<span class="author-name-sm">${name||'Anonymous'}</span>${tsHTML}</div>`;
 }
 
 async function init(){
@@ -922,14 +944,15 @@ function render(){
     const sols=[...(p.solutions||[])].sort((a,b)=>(b.helpful_count||0)-(a.helpful_count||0));
     const solCount=sols.length;
     const m=metooed[p.id];
-    const chip=authorChipHTML(p.author_name,p.author_avatar,p.author_avatar_type,p.author_avatar_data);
+    const chip=authorChipHTML(p.author_name,p.author_avatar,p.author_avatar_type,p.author_avatar_data,p.created_at);
     const solsHTML=sols.length>0
       ?sols.map((s,idx)=>{
         const voted=helpfulVoted[s.id];
         const hc=s.helpful_count||0;
         const label=hc>0?hc+' '+(hc===1?'person':'people')+' found this helpful':'Was this helpful?';
-        const sChip=s.author_name&&s.author_name!=='Anonymous'
-          ?`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${s.author_name}</span></div>`:'';
+        const sTs=getRelativeTime(s.created_at);
+        const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
+        const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">Solution by ${s.author_name||'Anonymous'}</span>${sTsHTML}</div>`;
         return `<div class="solution-item">
           <div class="solution-num">${idx+1}</div>
           <div class="solution-body">
