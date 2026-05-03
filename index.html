@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Shared Problem — You Are Not Alone</title>
   <meta name="description" content="Type any problem. Find out how many others share it — and what actually worked for them.">
+  <!-- Open Graph (Facebook / WhatsApp / LinkedIn) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Shared Problem">
   <meta property="og:title" content="Shared Problem — You Are Not Alone">
-  <meta property="og:description" content="Type any problem. Find how many others share it and what actually worked for them.">
+  <meta property="og:description" content="Type any problem. Find out how many others share it — and what actually worked for them.">
   <meta property="og:url" content="https://sharedproblem.com">
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Shared Problem — You Are Not Alone">
+  <meta name="twitter:description" content="Type any problem. Find out how many others share it — and what actually worked for them.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -975,6 +981,7 @@ let allProblems=[];
 let activeCat='All';
 let currentProblemId=null;  // when set, render() shows only this one problem
 const DEFAULT_TITLE='Shared Problem — You Are Not Alone';
+const DEFAULT_DESCRIPTION='Type any problem. Find out how many others share it — and what actually worked for them.';
 let metooed=JSON.parse(localStorage.getItem('sp_metooed')||'{}');
 let helpfulVoted=JSON.parse(localStorage.getItem('sp_helpful')||'{}');
 
@@ -1284,9 +1291,25 @@ function filterCatMobile(el,cat){
 }
 
 // ── Single-problem routing ───────────────────
-function escapeForTitle(s){
+function truncate(s,n){
   if(!s)return'';
-  return s.replace(/\s+/g,' ').trim().slice(0,80);
+  const clean=s.replace(/\s+/g,' ').trim();
+  return clean.length>n?clean.slice(0,n).trim()+'…':clean;
+}
+
+// Update document.title and the SEO/social meta tags in one call.
+function updateMetaTags(title, description){
+  document.title=title;
+  const setMeta=(selector,value)=>{
+    const el=document.querySelector(selector);
+    if(el)el.setAttribute('content',value);
+  };
+  setMeta('meta[name="description"]',description);
+  setMeta('meta[property="og:title"]',title);
+  setMeta('meta[property="og:description"]',description);
+  setMeta('meta[property="og:url"]',window.location.href);
+  setMeta('meta[name="twitter:title"]',title);
+  setMeta('meta[name="twitter:description"]',description);
 }
 
 function showSingleProblem(id, opts){
@@ -1302,9 +1325,21 @@ function showSingleProblem(id, opts){
   if(!opts.fromHistory){
     history.pushState({problemId:id},'','?p='+id);
   }
-  // Update document title for the single problem
+  // Update document title + meta tags for the single problem
   const p=allProblems.find(x=>x.id===id);
-  document.title=p?('Problem: '+escapeForTitle(p.text)+' | Shared Problem'):DEFAULT_TITLE;
+  if(p){
+    const title=truncate(p.text,60)+' | Shared Problem';
+    let description;
+    if(p.solutions&&p.solutions.length>0&&p.solutions[0].text){
+      description=truncate(p.solutions[0].text,160);
+    } else {
+      const cnt=(p.metoo_count||0).toLocaleString();
+      description=cnt+' people share this problem on Shared Problem. Join the conversation and share what worked for you.';
+    }
+    updateMetaTags(title,description);
+  } else {
+    updateMetaTags(DEFAULT_TITLE,DEFAULT_DESCRIPTION);
+  }
   render();
   window.scrollTo(0,0);
 }
@@ -1315,7 +1350,7 @@ function showFeed(opts){
   if(!opts.fromHistory){
     history.pushState({},'','/');
   }
-  document.title=DEFAULT_TITLE;
+  updateMetaTags(DEFAULT_TITLE,DEFAULT_DESCRIPTION);
   render();
 }
 
@@ -1367,7 +1402,7 @@ function showPage(name){
   // If user explicitly clicked Home from anywhere, clear any single-problem view
   if(name==='home'&&currentProblemId!==null)showFeed();
   // Going to a non-home page clears single mode visually too
-  if(name!=='home'&&currentProblemId!==null){currentProblemId=null;document.body.classList.remove('single-mode');document.title=DEFAULT_TITLE;}
+  if(name!=='home'&&currentProblemId!==null){currentProblemId=null;document.body.classList.remove('single-mode');updateMetaTags(DEFAULT_TITLE,DEFAULT_DESCRIPTION);}
   window.scrollTo(0,0);
 }
 
@@ -1409,7 +1444,7 @@ document.addEventListener('click', function(e){
   if(currentProblemId!==null){
     currentProblemId=null;
     history.pushState({},'','/');
-    document.title=DEFAULT_TITLE;
+    updateMetaTags(DEFAULT_TITLE,DEFAULT_DESCRIPTION);
   }
 
   if(typeof filterCat==='function'){
