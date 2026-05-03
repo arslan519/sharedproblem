@@ -206,8 +206,11 @@
     .metoo-btn:hover{background:var(--orange-dim);border-color:var(--orange-border);transform:scale(1.04);}
     .metoo-btn.active{background:var(--orange-dim);border-color:rgba(251,146,60,0.45);animation:glow 2s ease-in-out infinite;}
     .metoo-icon{font-size:18px;}
-    .metoo-count{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.55);transition:all 0.2s;}
+    .metoo-count{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.55);transition:all 0.2s;display:inline-block;}
     .metoo-btn.active .metoo-count{color:var(--orange);}
+    @keyframes countPop{0%{transform:scale(1);}40%{transform:scale(1.45);color:var(--orange);}100%{transform:scale(1);}}
+    .metoo-count.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
+    .stat-row-val.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);display:inline-block;}
     .metoo-label{font-size:9px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.25);}
     .metoo-btn.active .metoo-label{color:var(--orange);}
 
@@ -1105,20 +1108,75 @@ function toggleCard(id){
   toggle.textContent=card.classList.toggle('expanded')?'Hide ↑':'See solutions ↓';
 }
 
-async function doMeToo(id){
+// Trigger a brief pop animation on a counter element
+function popAnimate(el){
+  if(!el)return;
+  el.classList.remove('pop');
+  // force reflow so re-adding the class restarts the animation
+  void el.offsetWidth;
+  el.classList.add('pop');
+}
+
+async function handleMeToo(id){
   if(metooed[id]){showToast('You already said Me Too on this one!');return;}
-  metooed[id]=true;localStorage.setItem('sp_metooed',JSON.stringify(metooed));
   const p=allProblems.find(x=>x.id===id);if(!p)return;
+
+  // 1. Optimistic UI: lock immediately so a fast double-tap can't double-count
+  metooed[id]=true;localStorage.setItem('sp_metooed',JSON.stringify(metooed));
   p.metoo_count=(p.metoo_count||0)+1;
+
   const btn=document.getElementById('btn-'+id);
-  btn.classList.add('active');
-  btn.querySelector('.metoo-icon').textContent='🔥';
-  btn.querySelector('.metoo-label').textContent='same!';
-  document.getElementById('count-'+id).textContent=p.metoo_count.toLocaleString();
-  updateStats();
-  await db.from('problems').update({metoo_count:p.metoo_count}).eq('id',id);
+  if(btn){
+    btn.classList.add('active');
+    btn.disabled=true;
+    btn.querySelector('.metoo-icon').textContent='🔥';
+    btn.querySelector('.metoo-label').textContent='same!';
+  }
+  const countEl=document.getElementById('count-'+id);
+  if(countEl){
+    countEl.textContent=p.metoo_count.toLocaleString();
+    popAnimate(countEl);
+  }
+
+  // 2. Instant stats sync — bump the Community Stats "Me Too Clicks" by +1 right now
+  const statMetoos=document.getElementById('statMetoos');
+  if(statMetoos){
+    const cur=parseInt((statMetoos.textContent||'0').replace(/[^0-9]/g,''),10)||0;
+    statMetoos.textContent=(cur+1).toLocaleString();
+    popAnimate(statMetoos);
+  }
+
+  // 3. Atomic DB increment via RPC — safe under concurrent clicks.
+  // Falls back to a plain update if the RPC isn't installed yet.
+  let serverCount=null;
+  try{
+    const{data,error}=await db.rpc('increment_metoo',{row_id:id});
+    if(error)throw error;
+    if(typeof data==='number')serverCount=data;
+    else if(Array.isArray(data)&&data.length)serverCount=data[0]?.metoo_count??data[0];
+  }catch(rpcErr){
+    // Fallback: non-atomic update (still works, but races possible).
+    // Add the SQL `increment_metoo` RPC in Supabase to remove this fallback.
+    await db.from('problems').update({metoo_count:p.metoo_count}).eq('id',id);
+  }
+
+  // 4. Reconcile UI with server truth if RPC returned a fresher count
+  if(serverCount!==null && serverCount!==p.metoo_count){
+    p.metoo_count=serverCount;
+    if(countEl){countEl.textContent=serverCount.toLocaleString();popAnimate(countEl);}
+    if(statMetoos){
+      const total=allProblems.reduce((s,x)=>s+(x.metoo_count||0),0);
+      statMetoos.textContent=total.toLocaleString();
+    }
+  }
+
   showToast('🔥 Me Too counted! You are not alone.');
 }
+
+// Backwards compat — render() still emits onclick="doMeToo(...)" on each card.
+// Use a function declaration (not const) so it becomes a window property
+// and is reachable from inline onclick handlers.
+function doMeToo(id){return handleMeToo(id);}
 
 async function markHelpful(solId,problemId){
   if(helpfulVoted[solId]){showToast('You already marked this as helpful!');return;}
