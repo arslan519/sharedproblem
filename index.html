@@ -343,7 +343,7 @@
     .toast.show{display:block;animation:fadeUp 0.3s ease;}
     /* Version stamp + debug log (visible only on mobile while we debug) */
     .version-stamp{position:fixed;top:4px;right:4px;background:rgba(251,146,60,0.85);color:#fff;font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:6px;z-index:99999;pointer-events:none;}
-    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:'DM Mono',monospace;font-size:10px;padding:6px 10px;z-index:99999;max-height:80px;overflow-y:auto;line-height:1.4;border-top:1px solid var(--orange);display:none;}
+    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;z-index:99999;max-height:50px;overflow-y:auto;line-height:1.4;border-top:1px solid var(--orange);display:none;pointer-events:none;}
     .debug-log.show{display:block;}
     @media(min-width:861px){.version-stamp,.debug-log{display:none !important;}}
 
