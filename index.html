@@ -145,6 +145,15 @@
     }
     .cat-item:hover{background:var(--surface2);color:var(--text);}
     .cat-item.active,.cat-item.active-cat{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
+    /* Force-fix: guarantee mobile category buttons are the top-most clickable layer */
+    .mobile-cat-link{
+      cursor:pointer !important;
+      position:relative;
+      z-index:9999;
+      /* reset native button styling so it looks identical to the old <div> */
+      width:100%;text-align:left;font:inherit;color:inherit;
+      background:transparent;border:1px solid transparent;
+    }
     .cat-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
     .cat-count{font-size:10px;color:var(--muted);margin-left:auto;font-family:'DM Mono',monospace;}
 
@@ -495,12 +504,12 @@
       <div class="sidebar-card">
         <div class="sidebar-title">Topics</div>
         <div class="cat-list" id="catList">
-          <div class="cat-item" data-cat="Work" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Work')"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></div>
-          <div class="cat-item" data-cat="Health" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Health')"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></div>
-          <div class="cat-item" data-cat="Home" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Home')"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></div>
-          <div class="cat-item" data-cat="Money" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Money')"><span class="cat-icon">💰</span>Money<span class="cat-count" id="cnt-Money"></span></div>
-          <div class="cat-item" data-cat="Tech" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Tech')"><span class="cat-icon">💻</span>Tech<span class="cat-count" id="cnt-Tech"></span></div>
-          <div class="cat-item" data-cat="Relationships" onclick="event.preventDefault();event.stopPropagation();handleCatClick(this,'Relationships')"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></div>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Work" data-category="Work"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Health" data-category="Health"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Home" data-category="Home"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Money" data-category="Money"><span class="cat-icon">💰</span>Money<span class="cat-count" id="cnt-Money"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Tech" data-category="Tech"><span class="cat-icon">💻</span>Tech<span class="cat-count" id="cnt-Tech"></span></button>
+          <button type="button" class="cat-item mobile-cat-link" data-cat="Relationships" data-category="Relationships"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></button>
         </div>
       </div>
 
@@ -1216,35 +1225,42 @@ function backdropCloseHandler(event){
   closeDrawer();
 }
 
-// Single category-click pipeline.
-// Toast fires FIRST so we can confirm the handler actually runs. If the drawer closes
-// without a toast appearing, the click is being consumed elsewhere and never reaches us.
-function handleCatClick(el,cat,evt){
-  if(evt){evt.preventDefault&&evt.preventDefault();evt.stopPropagation&&evt.stopPropagation();}
-  showToast('Showing: '+cat);
-  try{
-    closeMobileDrawer();
-    filterCat(el,cat);
-    document.documentElement.scrollTop=0;
-    document.body.scrollTop=0;
-    window.scrollTo(0,0);
-  }catch(err){
-    showToast('Filter error: '+(err&&err.message?err.message:err));
-  }
-}
 function closeMobileDrawer(){closeDrawer();}
 
-// Backup: programmatic delegated listener — fires even if the inline onclick is somehow stripped/blocked.
-document.addEventListener('click',function(e){
-  const item=e.target.closest('.cat-item');
-  if(!item)return;
-  // If the element actually had its inline onclick fire, this will still run a second time;
-  // filterCat is idempotent so re-running with the same activeCat is a no-op visually.
-  if(item.dataset && item.dataset.cat){
-    e.stopPropagation();
-    handleCatClick(item,item.dataset.cat,e);
+// FORCE-FIX: capture-phase delegated listener for mobile category buttons.
+// 'true' (capture) ensures this fires BEFORE any "click outside to close" listener
+// attached to window/document/overlay. Single source of truth for category clicks.
+document.addEventListener('click', function(e) {
+  const catLink = e.target.closest('.mobile-cat-link');
+  if (!catLink) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const categoryName = catLink.getAttribute('data-category') || catLink.dataset.cat;
+  showToast('Showing: ' + categoryName);
+
+  // 1. Run the filter function (pass element so active class also gets applied)
+  if (typeof filterCat === 'function') {
+    filterCat(catLink, categoryName);
   }
-},true);
+
+  // 2. Manually close the drawer
+  const drawer = document.getElementById('sidebarLeft');
+  if (drawer) drawer.classList.remove('drawer-open');
+
+  // 3. Remove the overlay
+  const overlay = document.getElementById('drawerBackdrop');
+  if (overlay) overlay.classList.remove('open');
+
+  // 4. Release body scroll lock
+  document.body.classList.remove('drawer-open');
+
+  // 5. Hard scroll feed to top
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo(0, 0);
+}, true);
 
 function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
