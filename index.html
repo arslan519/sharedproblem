@@ -109,7 +109,9 @@
       display:grid;
       grid-template-columns:240px 1fr 300px;
       gap:24px;
-      position:relative;z-index:1;
+      position:relative;
+      /* NO z-index here — it would create a stacking context that traps the
+         mobile sidebar-left drawer below the drawer-backdrop. */
       align-items:start;
     }
 
@@ -794,7 +796,7 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
-<button class="version-stamp" id="versionStamp" type="button" onclick="copyDebugLog()">v10 — tap to copy log</button>
+<button class="version-stamp" id="versionStamp" type="button" onclick="copyDebugLog()">v11 — tap to copy log</button>
 <div class="debug-log show" id="debugLog">[debug] waiting for taps…</div>
 
 <script>
