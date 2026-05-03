@@ -342,8 +342,8 @@
     .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#17171a;border:2px solid var(--orange);border-radius:11px;padding:14px 24px;font-size:14px;font-family:'DM Mono',monospace;color:var(--text);z-index:99999;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(251,146,60,0.5);}
     .toast.show{display:block;animation:fadeUp 0.3s ease;}
     /* Version stamp + debug log (visible only on mobile while we debug) */
-    .version-stamp{position:fixed;top:4px;right:4px;background:rgba(251,146,60,0.85);color:#fff;font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:6px;z-index:99999;pointer-events:none;}
-    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.85);color:#0f0;font-family:'DM Mono',monospace;font-size:10px;padding:4px 10px;z-index:99999;max-height:50px;overflow-y:auto;line-height:1.4;border-top:1px solid var(--orange);display:none;pointer-events:none;}
+    .version-stamp{position:fixed;top:4px;right:4px;background:rgba(251,146,60,0.95);color:#fff;font-family:'DM Mono',monospace;font-size:11px;padding:6px 10px;border-radius:8px;z-index:99999;cursor:pointer;border:none;}
+    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:'DM Mono',monospace;font-size:11px;padding:8px 12px;z-index:99999;max-height:180px;overflow-y:auto;line-height:1.5;border-top:2px solid var(--orange);display:none;pointer-events:none;white-space:pre-wrap;word-break:break-word;}
     .debug-log.show{display:block;}
     @media(min-width:861px){.version-stamp,.debug-log{display:none !important;}}
 
@@ -792,7 +792,7 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
-<div class="version-stamp" id="versionStamp">v8 mobile-debug</div>
+<button class="version-stamp" id="versionStamp" type="button" onclick="copyDebugLog()">v9 — tap to copy log</button>
 <div class="debug-log show" id="debugLog">[debug] waiting for taps…</div>
 
 <script>
@@ -1238,7 +1238,26 @@ function closeMobileDrawer(){closeDrawer();}
 function dlog(msg){
   const d=document.getElementById('debugLog');if(!d)return;
   const stamp=new Date().toTimeString().slice(0,8);
-  d.textContent=`[${stamp}] ${msg}\n`+(d.textContent||'').slice(0,400);
+  d.textContent=`[${stamp}] ${msg}\n`+(d.textContent||'').slice(0,1200);
+}
+// Copy current debug log text to clipboard so user can paste it
+function copyDebugLog(){
+  const d=document.getElementById('debugLog');
+  const text=d?d.textContent||'':'(no log)';
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(
+      ()=>showToast('✅ Log copied — paste in chat'),
+      ()=>showToast('Copy failed — long-press the green box')
+    );
+  }else{
+    // Fallback for older browsers: select a hidden textarea
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');showToast('✅ Log copied');}
+    catch(e){showToast('Copy failed');}
+    document.body.removeChild(ta);
+  }
 }
 
 // Run on script load — confirms the script reached this point
