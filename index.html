@@ -48,34 +48,27 @@
     .page{display:none;}.page.active{display:block;}
 
     /* ── STICKY HEADER ───────────────────── */
-    :root{ --header-h: 108px; }/* nav 60px + search bar ~48px */
+    :root{ --header-h: 60px; }
     .sticky-header{
       position:sticky;top:0;z-index:1000;
       background:rgba(10,10,12,0.97);
       backdrop-filter:blur(24px);
-      border-bottom:1px solid var(--border);
     }
     nav{
       height:var(--nav-h);
       display:flex;align-items:center;
     }
-    .header-search-wrap{
-      border-top:1px solid var(--border);
-      background:rgba(10,10,12,0.6);
-      padding:10px 0;
-    }
-    .header-search-inner{
-      max-width:1400px;margin:0 auto;padding:0 24px;
-    }
-    /* Only show header search on home page */
-    .page:not(#page-home) ~ * .header-search-wrap,
-    #page-home:not(.active) ~ .sticky-header .header-search-wrap{display:none;}
-    /* Hide search bar on non-home pages using JS class */
-    .hide-search .header-search-wrap{display:none;}
     .nav-inner{
       max-width:1400px;margin:0 auto;padding:0 24px;
-      width:100%;display:flex;justify-content:space-between;align-items:center;
+      width:100%;display:flex;align-items:center;gap:18px;
     }
+    .nav-inner .search-box{
+      flex:1;max-width:500px;margin:0 auto;
+    }
+    .nav-inner .search-box .search-input{font-size:13px;padding:5px 0;}
+    .nav-inner .search-box .search-btn{padding:7px 14px;font-size:11px;}
+    /* Hide nav search on non-home pages */
+    .hide-search .nav-inner .search-box{visibility:hidden;}
     .logo-text{font-size:16px;font-weight:600;color:var(--text);letter-spacing:-0.2px;cursor:pointer;font-family:'Lora',serif;}
     .nav-links{display:flex;align-items:center;gap:4px;}
     .nav-link{background:none;border:none;padding:6px 12px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;border-radius:7px;transition:all 0.2s;letter-spacing:0.3px;}
@@ -142,8 +135,8 @@
 
     /* Search */
     #searchContainer{position:relative;margin-bottom:0;}
-    .header-search-inner .search-result{display:none;align-items:center;gap:12px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:12px;padding:10px 16px;margin-bottom:8px;}
-    .header-search-inner .search-result.show{display:flex;animation:fadeUp 0.25s ease;}
+    .search-result{display:none;align-items:center;gap:12px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:12px;padding:10px 16px;margin-bottom:14px;}
+    .search-result.show{display:flex;animation:fadeUp 0.25s ease;}
     .result-emoji{font-size:22px;}
     .result-count{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--orange);}
     .result-label{font-size:12px;color:var(--muted);margin-top:1px;}
@@ -227,9 +220,10 @@
     .sidebar-right{
       position:sticky;
       top:calc(var(--header-h) + 12px);
-      height:calc(100vh - var(--header-h) - 24px);
+      max-height:calc(100vh - var(--header-h) - 24px);
       overflow-y:auto;
       display:flex;flex-direction:column;gap:14px;
+      padding-bottom:8px;
     }
     .sidebar-right::-webkit-scrollbar{width:0;}
 
@@ -244,14 +238,14 @@
     .stat-row-val{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--orange);}
 
     /* CTA widget */
-    .cta-widget{background:linear-gradient(135deg,rgba(251,146,60,0.08) 0%,rgba(139,92,246,0.05) 100%);border:1px solid var(--orange-border);border-radius:16px;padding:20px;text-align:center;position:relative;overflow:hidden;}
+    .cta-widget{background:linear-gradient(135deg,rgba(251,146,60,0.08) 0%,rgba(139,92,246,0.05) 100%);border:1px solid var(--orange-border);border-radius:16px;padding:18px 18px 20px;text-align:center;position:relative;overflow:hidden;display:flex;flex-direction:column;}
     .cta-widget::before{content:'';position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(251,146,60,0.12) 0%,transparent 70%);pointer-events:none;}
-    .cta-widget-tag{font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:block;}
-    .cta-widget h3{font-size:16px;font-weight:600;margin-bottom:8px;letter-spacing:-0.3px;}
-    .cta-widget p{font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:16px;}
-    .cta-badges-sm{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+    .cta-widget-tag{font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:block;}
+    .cta-widget h3{font-size:15px;font-weight:600;margin-bottom:6px;letter-spacing:-0.3px;}
+    .cta-widget p{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+    .cta-badges-sm{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
     .cta-badge-sm{display:flex;align-items:center;gap:7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
-    .cta-btn-widget{width:100%;background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:11px;padding:12px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 4px 18px rgba(251,146,60,0.35);transition:all 0.2s;}
+    .cta-btn-widget{width:100%;background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:11px;padding:11px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 4px 18px rgba(251,146,60,0.35);transition:all 0.2s;flex-shrink:0;margin-top:auto;}
     .cta-btn-widget:hover{box-shadow:0 6px 24px rgba(251,146,60,0.5);transform:translateY(-1px);}
 
     /* About widget */
@@ -416,6 +410,10 @@
 <nav>
   <div class="nav-inner">
     <span class="logo-text" onclick="showPage('home')">Shared Problem</span>
+    <div class="search-box">
+      <input class="search-input" id="mainSearch" type="text" placeholder="Search any problem..." autocomplete="off" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()"/>
+      <button class="search-btn" onclick="doSearch()">Find Others →</button>
+    </div>
     <div class="nav-links">
       <button class="nav-link active-nav" onclick="showPage('home')" id="nav-home">Home</button>
       <button class="nav-link" onclick="showPage('about')" id="nav-about">About</button>
@@ -423,10 +421,6 @@
       <button class="nav-link" onclick="showPage('terms')" id="nav-terms">Terms</button>
     </div>
     <div class="nav-right">
-      <div class="live-badge">
-        <div class="live-dot"></div>
-        <span class="live-text"><span class="live-num" id="liveCount">...</span> shared</span>
-      </div>
       <div class="nav-profile" onclick="openProfileModal()" id="navProfile">
         <div class="nav-avatar" id="navAvatarWrap"></div>
         <span class="nav-name" id="navName">You</span>
@@ -434,22 +428,6 @@
     </div>
   </div>
 </nav>
-<!-- Search bar frozen under nav -->
-<div class="header-search-wrap" id="headerSearchWrap">
-  <div class="header-search-inner">
-    <div class="search-result" id="searchResult">
-      <div class="result-emoji">🔥</div>
-      <div>
-        <div class="result-count" id="resultCount">0 people</div>
-        <div class="result-label">share a similar problem. You are not alone.</div>
-      </div>
-    </div>
-    <div class="search-box">
-      <input class="search-input" id="mainSearch" type="text" placeholder="Search any problem..." autocomplete="off" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()"/>
-      <button class="search-btn" onclick="doSearch()">Find Others →</button>
-    </div>
-  </div>
-</div>
 </header>
 
 <!-- ══ HOME PAGE ══════════════════════════════ -->
@@ -461,7 +439,6 @@
       <div class="sidebar-card">
         <div class="sidebar-title">Topics</div>
         <div class="cat-list" id="catList">
-          <div class="cat-item active" data-cat="All" onclick="filterCat(this,'All')"><span class="cat-icon">🌐</span>All Topics<span class="cat-count" id="cnt-All"></span></div>
           <div class="cat-item" data-cat="Work" onclick="filterCat(this,'Work')"><span class="cat-icon">💼</span>Work<span class="cat-count" id="cnt-Work"></span></div>
           <div class="cat-item" data-cat="Health" onclick="filterCat(this,'Health')"><span class="cat-icon">🏥</span>Health<span class="cat-count" id="cnt-Health"></span></div>
           <div class="cat-item" data-cat="Home" onclick="filterCat(this,'Home')"><span class="cat-icon">🏠</span>Home<span class="cat-count" id="cnt-Home"></span></div>
@@ -470,6 +447,14 @@
           <div class="cat-item" data-cat="Relationships" onclick="filterCat(this,'Relationships')"><span class="cat-icon">❤️</span>Relationships<span class="cat-count" id="cnt-Relationships"></span></div>
         </div>
       </div>
+
+      <!-- Stats widget -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">Community Stats</div>
+        <div class="stat-row"><span class="stat-row-label">Problems Shared</span><span class="stat-row-val" id="statProblems">...</span></div>
+        <div class="stat-row"><span class="stat-row-label">Me Too Clicks</span><span class="stat-row-val" id="statMetoos">...</span></div>
+        <div class="stat-row"><span class="stat-row-label">Solutions Added</span><span class="stat-row-val" id="statSolutions">...</span></div>
+      </div>
     </aside>
 
     <!-- CENTER FEED -->
@@ -477,13 +462,21 @@
 
       <!-- Mobile category tabs -->
       <div class="mobile-cats" id="mobileCats">
-        <button class="mobile-cat-btn active" onclick="filterCatMobile(this,'All')">🌐 All</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Work')">💼 Work</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Health')">🏥 Health</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Home')">🏠 Home</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Money')">💰 Money</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Tech')">💻 Tech</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Relationships')">❤️ Relationships</button>
+      </div>
+
+      <!-- Search result banner -->
+      <div class="search-result" id="searchResult">
+        <div class="result-emoji">🔥</div>
+        <div>
+          <div class="result-count" id="resultCount">0 people</div>
+          <div class="result-label">share a similar problem. You are not alone.</div>
+        </div>
       </div>
 
       <!-- Trending -->
@@ -510,14 +503,6 @@
 
     <!-- RIGHT WIDGETS -->
     <aside class="sidebar-right">
-
-      <!-- Stats widget -->
-      <div class="widget">
-        <div class="widget-title">Community Stats</div>
-        <div class="stat-row"><span class="stat-row-label">Problems Shared</span><span class="stat-row-val" id="statProblems">...</span></div>
-        <div class="stat-row"><span class="stat-row-label">Me Too Clicks</span><span class="stat-row-val" id="statMetoos">...</span></div>
-        <div class="stat-row"><span class="stat-row-label">Solutions Added</span><span class="stat-row-val" id="statSolutions">...</span></div>
-      </div>
 
       <!-- CTA widget -->
       <div class="cta-widget">
@@ -906,19 +891,19 @@ async function loadProblems(){
 function updateStats(){
   const total=allProblems.reduce((s,p)=>s+(p.metoo_count||0),0);
   const sols=allProblems.reduce((s,p)=>s+(p.solution_count||0),0);
-  document.getElementById('liveCount').textContent=total.toLocaleString();
+  const live=document.getElementById('liveCount');
+  if(live)live.textContent=total.toLocaleString();
   document.getElementById('statProblems').textContent=allProblems.length;
   document.getElementById('statMetoos').textContent=total.toLocaleString();
   document.getElementById('statSolutions').textContent=sols;
 }
 
 function updateCatCounts(){
-  const cats=['All','Work','Health','Home','Money','Tech','Relationships'];
+  const cats=['Work','Health','Home','Money','Tech','Relationships'];
   cats.forEach(cat=>{
     const el=document.getElementById('cnt-'+cat);
     if(!el)return;
-    const count=cat==='All'?allProblems.length:allProblems.filter(p=>p.category===cat).length;
-    el.textContent=count;
+    el.textContent=allProblems.filter(p=>p.category===cat).length;
   });
 }
 
@@ -1078,8 +1063,8 @@ function showPage(name){
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active-nav'));
   const nl=document.getElementById('nav-'+name);if(nl)nl.classList.add('active-nav');
   // Show search bar only on home page
-  const searchWrap=document.getElementById('headerSearchWrap');
-  if(searchWrap) searchWrap.style.display=name==='home'?'block':'none';
+  const header=document.querySelector('.sticky-header');
+  if(header) header.classList.toggle('hide-search',name!=='home');
   window.scrollTo(0,0);
 }
 
