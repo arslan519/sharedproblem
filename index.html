@@ -141,32 +141,18 @@
     .feed{min-width:0;}/* prevents grid blowout */
 
     /* Search */
-    #searchContainer{position:relative;margin-bottom:20px;}
-    .search-result{display:none;align-items:center;gap:14px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:14px;padding:14px 18px;margin-bottom:10px;}
-    .search-result.show{display:flex;animation:fadeUp 0.3s ease;}
-    .result-emoji{font-size:26px;}
-    .result-count{font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:var(--orange);}
-    .result-label{font-size:12px;color:var(--muted);margin-top:2px;}
-    .search-box{display:flex;gap:10px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:6px 6px 6px 18px;transition:all 0.25s;}
+    #searchContainer{position:relative;margin-bottom:0;}
+    .header-search-inner .search-result{display:none;align-items:center;gap:12px;background:rgba(251,146,60,0.07);border:1px solid var(--orange-border);border-radius:12px;padding:10px 16px;margin-bottom:8px;}
+    .header-search-inner .search-result.show{display:flex;animation:fadeUp 0.25s ease;}
+    .result-emoji{font-size:22px;}
+    .result-count{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:var(--orange);}
+    .result-label{font-size:12px;color:var(--muted);margin-top:1px;}
+    .search-box{display:flex;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:6px 6px 6px 16px;transition:all 0.25s;}
     .search-box:focus-within{border-color:var(--orange-border);background:rgba(251,146,60,0.04);box-shadow:0 0 0 3px rgba(251,146,60,0.06);}
-    .search-input{flex:1;background:none;border:none;outline:none;font-size:14px;color:var(--text);font-family:'Lora',serif;padding:8px 0;}
+    .search-input{flex:1;background:none;border:none;outline:none;font-size:14px;color:var(--text);font-family:'Lora',serif;padding:7px 0;}
     .search-input::placeholder{color:rgba(255,255,255,0.2);}
-    .search-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:11px;padding:10px 20px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(251,146,60,0.3);transition:all 0.2s;}
+    .search-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:10px;padding:9px 18px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(251,146,60,0.3);transition:all 0.2s;}
     .search-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(251,146,60,0.4);}
-
-    /* Dropdown */
-    .search-dropdown{position:absolute;top:100%;left:0;right:0;background:#18181b;border:1px solid var(--orange-border);border-radius:13px;overflow:hidden;z-index:2000;box-shadow:0 20px 60px rgba(0,0,0,0.7);display:none;margin-top:4px;}
-    .search-dropdown.open{display:block;animation:fadeUp 0.18s ease;}
-    .drop-item{padding:12px 16px;cursor:pointer;transition:background 0.15s;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:flex-start;gap:10px;}
-    .drop-item:last-child{border-bottom:none;}
-    .drop-item:hover{background:var(--orange-dim);}
-    .drop-icon{font-size:16px;margin-top:1px;flex-shrink:0;}
-    .drop-body{flex:1;min-width:0;}
-    .drop-cat{font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px;}
-    .drop-text{font-size:13px;color:var(--text);line-height:1.4;}
-    .drop-text mark{background:none;color:var(--orange);font-weight:600;font-style:normal;}
-    .drop-meta{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);margin-top:2px;}
-    .drop-empty{padding:16px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);text-align:center;}
 
     /* Trending pills */
     .trending{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
@@ -937,10 +923,10 @@ function updateCatCounts(){
 }
 
 function render(){
-  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const q=getQuery().toLowerCase();
   const list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
   document.getElementById('feedCount').textContent=list.length+' problems';
-  document.getElementById('feedLabel').textContent=q?'Search Results for "'+q+'"':'Most Shared Right Now';
+  document.getElementById('feedLabel').textContent=q?'Search Results for "'+getQuery()+'"':'Most Shared Right Now';
   document.getElementById('feedLabel').style.color=q?'var(--orange)':'rgba(255,255,255,0.22)';
   const container=document.getElementById('problemFeed');
   if(list.length===0){
@@ -1037,76 +1023,37 @@ async function markHelpful(solId,problemId){
 }
 
 // ── Search & filter ───────────────────────────
-function highlightMatch(text,q){
-  if(!q)return text;
-  const idx=text.toLowerCase().indexOf(q.toLowerCase());
-  if(idx===-1)return text;
-  return text.slice(0,idx)+'<mark>'+text.slice(idx,idx+q.length)+'</mark>'+text.slice(idx+q.length);
+function getQuery(){
+  const el=document.getElementById('mainSearch');
+  return el?el.value.trim():'';
 }
 
-function showDropdown(q){
-  const dd=document.getElementById('searchDropdown');
-  if(!q){dd.classList.remove('open');dd.innerHTML='';return;}
-  const matches=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase())).slice(0,6);
-  if(matches.length===0){
-    dd.innerHTML=`<div class="drop-empty">🌱 No matches yet — <span style="color:var(--orange);cursor:pointer;" onclick="openModal()">share yours</span></div>`;
-  } else {
-    dd.innerHTML=matches.map(p=>`
-      <div class="drop-item" onclick="selectDropItem(${p.id})">
-        <div class="drop-icon">👆</div>
-        <div class="drop-body">
-          <div class="drop-cat">${p.category}</div>
-          <div class="drop-text">${highlightMatch(p.text,q)}</div>
-          <div class="drop-meta">${(p.metoo_count||0).toLocaleString()} Me Toos · ${p.solution_count||0} solutions</div>
-        </div>
-      </div>`).join('');
+function onSearchInput(){
+  const q=getQuery();
+  const result=document.getElementById('searchResult');
+  if(!q){
+    result.classList.remove('show');
+    render();
+    return;
   }
-  dd.classList.add('open');
-}
-
-function selectDropItem(id){
-  document.getElementById('searchDropdown').classList.remove('open');
-  document.getElementById('searchInput').value='';
-  document.getElementById('searchResult').classList.remove('show');
+  // Update count banner
+  const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
+  const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
+  document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
+  result.classList.add('show');
+  // Filter feed in real time
   render();
-  setTimeout(()=>{
-    const card=document.getElementById('card-'+id);
-    if(card){card.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>toggleCard(id),400);}
-  },100);
 }
 
 function doSearch(){
-  const q=document.getElementById('searchInput').value.trim();
-  const result=document.getElementById('searchResult');
-  document.getElementById('searchDropdown').classList.remove('open');
-  if(!q){result.classList.remove('show');render();return;}
-  const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
-  const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
-  document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
-  result.classList.add('show');
-  render();
+  // Just trigger the same live filter — no extra logic needed
+  onSearchInput();
 }
 
-document.getElementById('searchInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter')doSearch();
-  if(e.key==='Escape')document.getElementById('searchDropdown').classList.remove('open');
-});
-document.getElementById('searchInput').addEventListener('input',()=>{
-  const q=document.getElementById('searchInput').value.trim();
-  const result=document.getElementById('searchResult');
-  if(!q){result.classList.remove('show');render();document.getElementById('searchDropdown').classList.remove('open');return;}
-  showDropdown(q);render();
-  const matching=allProblems.filter(p=>p.text.toLowerCase().includes(q.toLowerCase()));
-  const total=matching.reduce((s,p)=>s+(p.metoo_count||0),0);
-  document.getElementById('resultCount').textContent=(total||Math.floor(Math.random()*800+50)).toLocaleString()+' people';
-  result.classList.add('show');
-});
-document.addEventListener('click',e=>{
-  if(!document.getElementById('searchInput').contains(e.target)&&!document.getElementById('searchDropdown').contains(e.target)){
-    document.getElementById('searchDropdown').classList.remove('open');
-  }
-});
-function fillSearch(el){document.getElementById('searchInput').value=el.textContent;doSearch();}
+function fillSearch(el){
+  const input=document.getElementById('mainSearch');
+  if(input){ input.value=el.textContent; onSearchInput(); }
+}
 
 function filterCat(el,cat){
   activeCat=cat;
@@ -1130,6 +1077,9 @@ function showPage(name){
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active-nav'));
   const nl=document.getElementById('nav-'+name);if(nl)nl.classList.add('active-nav');
+  // Show search bar only on home page
+  const searchWrap=document.getElementById('headerSearchWrap');
+  if(searchWrap) searchWrap.style.display=name==='home'?'block':'none';
   window.scrollTo(0,0);
 }
 
