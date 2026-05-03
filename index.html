@@ -73,8 +73,8 @@
     }
     .hamburger-btn:hover{background:var(--surface2);}
     .drawer-backdrop{
-      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
-      backdrop-filter:blur(4px);z-index:1500;opacity:0;transition:opacity 0.3s ease;
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);
+      z-index:1500;opacity:0;transition:opacity 0.3s ease;
     }
     .drawer-backdrop.open{display:block;opacity:1;}
     .drawer-close{
@@ -393,10 +393,7 @@
       }
       .sidebar-left.drawer-open{transform:translateX(0);}
       .drawer-close{display:flex;align-items:center;justify-content:center;}
-      .mobile-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;-ms-overflow-style:none;scrollbar-width:none;}
-      .mobile-cats::-webkit-scrollbar{display:none;}
-      .mobile-cat-btn{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;white-space:nowrap;transition:all 0.2s;}
-      .mobile-cat-btn.active{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
+      .mobile-cats{display:none;}/* hidden — categories now live in the drawer only */
       .nav-links{display:none;}
       .hamburger-btn{display:inline-flex;align-items:center;justify-content:center;}
       .about-values{grid-template-columns:1fr;}
