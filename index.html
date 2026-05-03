@@ -339,8 +339,13 @@
     #profileFileInput{display:none;}
 
     /* Toast */
-    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#17171a;border:1px solid var(--orange-border);border-radius:11px;padding:11px 20px;font-size:12px;font-family:'DM Mono',monospace;color:var(--text);z-index:999;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#17171a;border:2px solid var(--orange);border-radius:11px;padding:14px 24px;font-size:14px;font-family:'DM Mono',monospace;color:var(--text);z-index:99999;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(251,146,60,0.5);}
     .toast.show{display:block;animation:fadeUp 0.3s ease;}
+    /* Version stamp + debug log (visible only on mobile while we debug) */
+    .version-stamp{position:fixed;top:4px;right:4px;background:rgba(251,146,60,0.85);color:#fff;font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:6px;z-index:99999;pointer-events:none;}
+    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:'DM Mono',monospace;font-size:10px;padding:6px 10px;z-index:99999;max-height:80px;overflow-y:auto;line-height:1.4;border-top:1px solid var(--orange);display:none;}
+    .debug-log.show{display:block;}
+    @media(min-width:861px){.version-stamp,.debug-log{display:none !important;}}
 
     /* About/Legal pages */
     .page-wrapper{max-width:760px;margin:0 auto;padding:52px 24px 80px;position:relative;z-index:1;}
@@ -787,6 +792,8 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
+<div class="version-stamp" id="versionStamp">v8 mobile-debug</div>
+<div class="debug-log show" id="debugLog">[debug] waiting for taps…</div>
 
 <script>
 const SUPABASE_URL='https://odowphgmadyoadiztjmu.supabase.co';
@@ -1227,40 +1234,51 @@ function backdropCloseHandler(event){
 
 function closeMobileDrawer(){closeDrawer();}
 
-// FORCE-FIX: capture-phase delegated listener for mobile category buttons.
-// 'true' (capture) ensures this fires BEFORE any "click outside to close" listener
-// attached to window/document/overlay. Single source of truth for category clicks.
-document.addEventListener('click', function(e) {
-  const catLink = e.target.closest('.mobile-cat-link');
-  if (!catLink) return;
+// On-page debug log so we can see what's happening on the phone without devtools
+function dlog(msg){
+  const d=document.getElementById('debugLog');if(!d)return;
+  const stamp=new Date().toTimeString().slice(0,8);
+  d.textContent=`[${stamp}] ${msg}\n`+(d.textContent||'').slice(0,400);
+}
 
-  e.preventDefault();
-  e.stopPropagation();
+// Run on script load — confirms the script reached this point
+dlog('script loaded — handlers ready');
 
-  const categoryName = catLink.getAttribute('data-category') || catLink.dataset.cat;
-  showToast('Showing: ' + categoryName);
+function categoryClickHandler(e){
+  try{
+    dlog(e.type+' fired, target='+e.target.tagName+'.'+(e.target.className||'').slice(0,30));
+    const catLink=e.target.closest('.mobile-cat-link');
+    if(!catLink){dlog('  no .mobile-cat-link ancestor — ignored');return;}
+    if(catLink._handled){dlog('  duplicate — ignored');return;}
+    catLink._handled=true;setTimeout(()=>{catLink._handled=false;},500);
 
-  // 1. Run the filter function (pass element so active class also gets applied)
-  if (typeof filterCat === 'function') {
-    filterCat(catLink, categoryName);
+    e.preventDefault&&e.preventDefault();
+    e.stopPropagation&&e.stopPropagation();
+
+    const categoryName=catLink.getAttribute('data-category')||catLink.dataset.cat;
+    dlog('  HIT: '+categoryName);
+    showToast('Showing: '+categoryName);
+
+    if(typeof filterCat==='function'){filterCat(catLink,categoryName);dlog('  filterCat ok');}
+    else dlog('  filterCat MISSING');
+
+    const drawer=document.getElementById('sidebarLeft');
+    if(drawer)drawer.classList.remove('drawer-open');
+    const overlay=document.getElementById('drawerBackdrop');
+    if(overlay)overlay.classList.remove('open');
+    document.body.classList.remove('drawer-open');
+
+    document.documentElement.scrollTop=0;document.body.scrollTop=0;window.scrollTo(0,0);
+    dlog('  drawer closed, scrolled');
+  }catch(err){
+    dlog('  ERROR: '+(err&&err.message?err.message:err));
+    showToast('Error: '+(err&&err.message?err.message:err));
   }
+}
 
-  // 2. Manually close the drawer
-  const drawer = document.getElementById('sidebarLeft');
-  if (drawer) drawer.classList.remove('drawer-open');
-
-  // 3. Remove the overlay
-  const overlay = document.getElementById('drawerBackdrop');
-  if (overlay) overlay.classList.remove('open');
-
-  // 4. Release body scroll lock
-  document.body.classList.remove('drawer-open');
-
-  // 5. Hard scroll feed to top
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
-  window.scrollTo(0, 0);
-}, true);
+// Register on BOTH click and touchend in capture phase — covers iOS quirks
+document.addEventListener('click', categoryClickHandler, true);
+document.addEventListener('touchend', categoryClickHandler, true);
 
 function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
