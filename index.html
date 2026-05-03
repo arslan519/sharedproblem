@@ -172,10 +172,21 @@
     #searchContainer{position:relative;margin-bottom:0;}
     .search-box{display:flex;gap:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:6px 6px 6px 16px;transition:all 0.25s;}
     .search-box:focus-within{border-color:var(--orange-border);background:rgba(251,146,60,0.04);box-shadow:0 0 0 3px rgba(251,146,60,0.06);}
-    .search-input{flex:1;background:none;border:none;outline:none;font-size:14px;color:var(--text);font-family:'Lora',serif;padding:7px 0;}
+    .search-input-wrap{position:relative;flex:1;display:flex;align-items:center;min-width:0;}
+    .search-input{flex:1;background:none;border:none;outline:none;font-size:14px;color:var(--text);font-family:'Lora',serif;padding:7px 28px 7px 0;width:100%;}
     .search-input::placeholder{color:rgba(255,255,255,0.2);}
+    .search-clear{
+      display:none;position:absolute;right:4px;top:50%;transform:translateY(-50%);
+      background:none;border:none;color:var(--muted);font-size:18px;line-height:1;
+      cursor:pointer;padding:6px 8px;border-radius:6px;font-family:'DM Mono',monospace;
+      transition:all 0.18s;
+    }
+    .search-clear:hover{color:var(--orange);background:var(--orange-dim);}
+    .search-clear.show{display:inline-flex;align-items:center;justify-content:center;}
     .search-btn{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:10px;padding:9px 18px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(251,146,60,0.3);transition:all 0.2s;}
     .search-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(251,146,60,0.4);}
+    /* Highlight matches inside problem text during search */
+    .search-highlight{background:rgba(251,146,60,0.28);color:var(--orange);border-radius:3px;padding:0 2px;font-weight:600;}
 
     /* Trending pills */
     .trending{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
@@ -500,7 +511,10 @@
     <button class="hamburger-btn" onclick="toggleDrawer()" aria-label="Open menu">☰</button>
     <span class="logo-text" onclick="showPage('home')">Shared Problem</span>
     <div class="search-box">
-      <input class="search-input" id="mainSearch" type="text" placeholder="Search any problem..." autocomplete="off" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()"/>
+      <div class="search-input-wrap">
+        <input class="search-input" id="mainSearch" type="text" placeholder="Search any problem..." autocomplete="off" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()"/>
+        <button class="search-clear" id="searchClear" type="button" onclick="clearSearch()" aria-label="Clear search">&times;</button>
+      </div>
       <button class="search-btn" onclick="doSearch()">Find Others →</button>
     </div>
     <div class="nav-links">
@@ -1140,7 +1154,7 @@ function render(){
         <div class="card-body">
           <div class="card-cat">${p.category}</div>
           ${chip}
-          <div class="card-text" ${textOnclick}>${p.text}</div>
+          <div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>
           <div class="card-meta">
             <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
             ${isSingle?'':`<span class="card-meta-dot"> · </span>
@@ -1260,9 +1274,42 @@ function getQuery(){
   return el?el.value.trim():'';
 }
 
+// Escape HTML so user-submitted text can't inject markup
+function escapeHTML(s){
+  return String(s||'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+// Wrap matches of `query` inside `text` with <span class="search-highlight">.
+// Always escapes HTML first — safe to inject into innerHTML.
+function highlightMatch(text, query){
+  const escaped=escapeHTML(text);
+  const q=(query||'').trim();
+  if(!q)return escaped;
+  // Escape regex special chars so user input can't break the regex
+  const safeQ=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const re=new RegExp('('+safeQ+')','gi');
+  return escaped.replace(re,'<span class="search-highlight">$1</span>');
+}
+
 function onSearchInput(){
+  // Toggle the clear (X) button based on whether the input has any text
+  const input=document.getElementById('mainSearch');
+  const clearBtn=document.getElementById('searchClear');
+  if(clearBtn)clearBtn.classList.toggle('show', !!(input&&input.value.length));
   // Live-filter the feed as the user types — no popup, no fake counts.
   render();
+}
+
+function clearSearch(){
+  const input=document.getElementById('mainSearch');
+  if(input)input.value='';
+  const clearBtn=document.getElementById('searchClear');
+  if(clearBtn)clearBtn.classList.remove('show');
+  // Re-render the feed unfiltered + clear any "no results" state in render()
+  render();
+  if(input)input.focus();
 }
 
 function doSearch(){
