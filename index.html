@@ -343,11 +343,6 @@
     /* Toast */
     .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#17171a;border:2px solid var(--orange);border-radius:11px;padding:14px 24px;font-size:14px;font-family:'DM Mono',monospace;color:var(--text);z-index:99999;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(251,146,60,0.5);}
     .toast.show{display:block;animation:fadeUp 0.3s ease;}
-    /* Version stamp + debug log (visible only on mobile while we debug) */
-    .version-stamp{position:fixed;top:4px;right:4px;background:rgba(251,146,60,0.95);color:#fff;font-family:'DM Mono',monospace;font-size:11px;padding:6px 10px;border-radius:8px;z-index:99999;cursor:pointer;border:none;}
-    .debug-log{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#0f0;font-family:'DM Mono',monospace;font-size:11px;padding:8px 12px;z-index:99999;max-height:180px;overflow-y:auto;line-height:1.5;border-top:2px solid var(--orange);display:none;pointer-events:none;white-space:pre-wrap;word-break:break-word;}
-    .debug-log.show{display:block;}
-    @media(min-width:861px){.version-stamp,.debug-log{display:none !important;}}
 
     /* About/Legal pages */
     .page-wrapper{max-width:760px;margin:0 auto;padding:52px 24px 80px;position:relative;z-index:1;}
@@ -796,8 +791,6 @@
 
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
-<button class="version-stamp" id="versionStamp" type="button" onclick="copyDebugLog()">v11 — tap to copy log</button>
-<div class="debug-log show" id="debugLog">[debug] waiting for taps…</div>
 
 <script>
 const SUPABASE_URL='https://odowphgmadyoadiztjmu.supabase.co';
@@ -1238,70 +1231,32 @@ function backdropCloseHandler(event){
 
 function closeMobileDrawer(){closeDrawer();}
 
-// On-page debug log so we can see what's happening on the phone without devtools
-function dlog(msg){
-  const d=document.getElementById('debugLog');if(!d)return;
-  const stamp=new Date().toTimeString().slice(0,8);
-  d.textContent=`[${stamp}] ${msg}\n`+(d.textContent||'').slice(0,1200);
-}
-// Copy current debug log text to clipboard so user can paste it
-function copyDebugLog(){
-  const d=document.getElementById('debugLog');
-  const text=d?d.textContent||'':'(no log)';
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(
-      ()=>showToast('✅ Log copied — paste in chat'),
-      ()=>showToast('Copy failed — long-press the green box')
-    );
-  }else{
-    // Fallback for older browsers: select a hidden textarea
-    const ta=document.createElement('textarea');
-    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
-    document.body.appendChild(ta);ta.select();
-    try{document.execCommand('copy');showToast('✅ Log copied');}
-    catch(e){showToast('Copy failed');}
-    document.body.removeChild(ta);
+// Capture-phase delegated listener for mobile category buttons.
+// Catches the click before any other listener can intercept it, then
+// applies the filter and closes the drawer.
+document.addEventListener('click', function(e){
+  const catLink=e.target.closest('.mobile-cat-link');
+  if(!catLink)return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const categoryName=catLink.getAttribute('data-category')||catLink.dataset.cat;
+
+  if(typeof filterCat==='function'){
+    filterCat(catLink,categoryName);
   }
-}
 
-// Run on script load — confirms the script reached this point
-dlog('script loaded — handlers ready');
+  // Close drawer + overlay + release body scroll lock
+  document.getElementById('sidebarLeft').classList.remove('drawer-open');
+  document.getElementById('drawerBackdrop').classList.remove('open');
+  document.body.classList.remove('drawer-open');
 
-function categoryClickHandler(e){
-  try{
-    dlog(e.type+' fired, target='+e.target.tagName+'.'+(e.target.className||'').slice(0,30));
-    const catLink=e.target.closest('.mobile-cat-link');
-    if(!catLink){dlog('  no .mobile-cat-link ancestor — ignored');return;}
-    if(catLink._handled){dlog('  duplicate — ignored');return;}
-    catLink._handled=true;setTimeout(()=>{catLink._handled=false;},500);
-
-    e.preventDefault&&e.preventDefault();
-    e.stopPropagation&&e.stopPropagation();
-
-    const categoryName=catLink.getAttribute('data-category')||catLink.dataset.cat;
-    dlog('  HIT: '+categoryName);
-    showToast('Showing: '+categoryName);
-
-    if(typeof filterCat==='function'){filterCat(catLink,categoryName);dlog('  filterCat ok');}
-    else dlog('  filterCat MISSING');
-
-    const drawer=document.getElementById('sidebarLeft');
-    if(drawer)drawer.classList.remove('drawer-open');
-    const overlay=document.getElementById('drawerBackdrop');
-    if(overlay)overlay.classList.remove('open');
-    document.body.classList.remove('drawer-open');
-
-    document.documentElement.scrollTop=0;document.body.scrollTop=0;window.scrollTo(0,0);
-    dlog('  drawer closed, scrolled');
-  }catch(err){
-    dlog('  ERROR: '+(err&&err.message?err.message:err));
-    showToast('Error: '+(err&&err.message?err.message:err));
-  }
-}
-
-// Register on BOTH click and touchend in capture phase — covers iOS quirks
-document.addEventListener('click', categoryClickHandler, true);
-document.addEventListener('touchend', categoryClickHandler, true);
+  // Hard scroll feed to top so user clearly sees the new filtered list
+  document.documentElement.scrollTop=0;
+  document.body.scrollTop=0;
+  window.scrollTo(0,0);
+}, true);
 
 function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
