@@ -257,15 +257,16 @@
     .about-link-btn:hover{color:var(--orange);border-color:var(--orange-border);}
 
     /* Modals */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center;padding:20px;}
     .modal-overlay.open{display:flex;animation:fadeIn 0.2s ease;}
     .modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:22px;padding:32px;width:100%;max-width:500px;animation:popIn 0.3s ease;position:relative;}
     .modal-close{position:absolute;top:14px;right:14px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 9px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;}
     .modal h3{font-size:20px;font-weight:600;margin-bottom:7px;}
     .modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
     .modal label{display:block;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:7px;}
-    .modal textarea,.modal select{width:100%;background:rgba(255,255,255,0.035);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Lora',serif;font-size:14px;outline:none;margin-bottom:16px;resize:vertical;transition:border-color 0.2s;}
-    .modal textarea:focus,.modal select:focus{border-color:var(--orange-border);}
+    .modal textarea,.modal select,.modal-name-input{width:100%;background:rgba(255,255,255,0.035);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Lora',serif;font-size:14px;outline:none;margin-bottom:16px;resize:vertical;transition:border-color 0.2s;}
+    .modal textarea:focus,.modal select:focus,.modal-name-input:focus{border-color:var(--orange-border);}
+    .modal-name-input::placeholder{color:rgba(255,255,255,0.25);}
     .modal textarea{min-height:90px;}
     .modal select option{background:#111113;}
     .modal-anon{display:flex;align-items:center;gap:7px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:18px;}
@@ -276,9 +277,11 @@
     .modal-submit:disabled{opacity:0.45;cursor:not-allowed;}
 
     /* Welcome modal */
-    .welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+    .welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
     .welcome-overlay.hidden{display:none;}
-    .welcome-modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:36px;width:100%;max-width:420px;animation:popIn 0.4s ease;text-align:center;}
+    .welcome-modal{background:#111113;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:36px;width:100%;max-width:420px;animation:popIn 0.4s ease;text-align:center;position:relative;}
+    .welcome-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;transition:all 0.2s;}
+    .welcome-close:hover{background:var(--orange-dim);border-color:var(--orange-border);color:var(--orange);}
     .welcome-emoji{font-size:48px;margin-bottom:18px;display:block;}
     .welcome-modal h2{font-size:22px;font-weight:600;margin-bottom:9px;letter-spacing:-0.5px;}
     .welcome-modal p{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:28px;}
@@ -386,6 +389,7 @@
 <!-- WELCOME MODAL -->
 <div class="welcome-overlay" id="welcomeOverlay">
   <div class="welcome-modal">
+    <button class="welcome-close" onclick="skipIdentity()" aria-label="Close">✕</button>
     <span class="welcome-emoji">👋</span>
     <h2>Welcome to Shared Problem</h2>
     <p>Pick an avatar and an optional nickname. Everything stays anonymous — no email, no signup.</p>
@@ -661,6 +665,8 @@
     <h3>Share Your Problem</h3>
     <p class="modal-sub">Posting as <strong id="postingAs">Anonymous</strong>. No email needed.</p>
     <div class="modal-anon"><div class="anon-dot"></div>Your identity is optional and browser-only</div>
+    <label>Your name (optional)</label>
+    <input id="problemNameInput" class="modal-name-input" type="text" maxlength="20" placeholder="Leave blank to post as Anonymous" oninput="onNameInput(this.value)"/>
     <label>Describe your problem</label>
     <textarea id="problemText" placeholder="Be specific — e.g. My manager takes credit for my work in meetings..."></textarea>
     <label>Category</label>
@@ -684,7 +690,9 @@
     <h3>Add Your Solution</h3>
     <p class="modal-sub" id="solutionProblemTitle" style="color:var(--orange);font-style:italic;font-size:13px;margin-bottom:16px;"></p>
     <div class="modal-anon"><div class="anon-dot"></div>Posting as <strong id="solutionPostingAs">Anonymous</strong></div>
-    <label style="margin-top:14px;">What worked for you?</label>
+    <label style="margin-top:14px;">Your name (optional)</label>
+    <input id="solutionNameInput" class="modal-name-input" type="text" maxlength="20" placeholder="Leave blank to post as Anonymous" oninput="onNameInput(this.value)"/>
+    <label>What worked for you?</label>
     <textarea id="solutionText" placeholder="Describe exactly what you did and why it worked..."></textarea>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeSolutionModal()">Cancel</button>
@@ -742,12 +750,37 @@ function renderNavProfile(){
   document.getElementById('navName').textContent=getDisplayName();
 }
 
+function getUserName(){
+  const v=(localStorage.getItem('user_name')||'').trim();
+  return v||'Anonymous';
+}
+
 function updatePostingAs(){
-  const n=getDisplayName();
+  const n=getUserName();
   const e1=document.getElementById('postingAs');
   const e2=document.getElementById('solutionPostingAs');
   if(e1)e1.textContent=n;
   if(e2)e2.textContent=n;
+}
+
+function populateNameInputs(){
+  const stored=localStorage.getItem('user_name')||'';
+  ['problemNameInput','solutionNameInput'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value=stored;
+  });
+}
+
+function onNameInput(value){
+  localStorage.setItem('user_name',value);
+  if(identity){identity.name=value.trim()||'Anonymous';localStorage.setItem('sp_identity',JSON.stringify(identity));}
+  // mirror to the other modal's input so they stay in sync
+  ['problemNameInput','solutionNameInput'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.value!==value)el.value=value;
+  });
+  updatePostingAs();
+  renderNavProfile();
 }
 
 let selectedEmoji='🦊';
@@ -883,6 +916,14 @@ function authorChipHTML(name,avatar,avatarType,avatarData,createdAt){
 }
 
 async function init(){
+  // Sync stored user_name into identity so "Posting as" works without welcome flow
+  const storedName=(localStorage.getItem('user_name')||'').trim();
+  if(storedName){
+    if(!identity)identity={name:storedName,avatar:'🌀',avatarType:'emoji',avatarData:null};
+    else identity.name=storedName;
+    localStorage.setItem('sp_identity',JSON.stringify(identity));
+  }
+  populateNameInputs();
   if(!localStorage.getItem('sp_welcomed')){
     document.getElementById('welcomeOverlay').classList.remove('hidden');
   } else {
@@ -910,14 +951,25 @@ async function loadProblems(){
   render();
 }
 
+async function fetchStats(){
+  try{
+    const [pRes,sRes]=await Promise.all([
+      db.from('problems').select('*',{count:'exact',head:true}),
+      db.from('solutions').select('*',{count:'exact',head:true})
+    ]);
+    const elP=document.getElementById('statProblems');
+    const elS=document.getElementById('statSolutions');
+    if(elP)elP.textContent=(pRes.count||0).toLocaleString();
+    if(elS)elS.textContent=(sRes.count||0).toLocaleString();
+  }catch(e){/* leave UI as-is on failure */}
+}
+
 function updateStats(){
   const total=allProblems.reduce((s,p)=>s+(p.metoo_count||0),0);
-  const sols=allProblems.reduce((s,p)=>s+(p.solution_count||0),0);
   const live=document.getElementById('liveCount');
   if(live)live.textContent=total.toLocaleString();
-  document.getElementById('statProblems').textContent=allProblems.length;
   document.getElementById('statMetoos').textContent=total.toLocaleString();
-  document.getElementById('statSolutions').textContent=sols;
+  fetchStats();
 }
 
 function updateCatCounts(){
@@ -1091,7 +1143,7 @@ function showPage(name){
   window.scrollTo(0,0);
 }
 
-function openModal(){updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
+function openModal(){populateNameInputs();updatePostingAs();document.getElementById('modalOverlay').classList.add('open');document.body.style.overflow='hidden';}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');document.body.style.overflow='';}
 function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
 
@@ -1099,9 +1151,10 @@ async function submitProblem(){
   const text=document.getElementById('problemText').value.trim();
   const category=document.getElementById('problemCat').value;
   if(!text){showToast('Please describe your problem first.');return;}
+  const authorName=getUserName();
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
-  const{data,error}=await db.from('problems').insert({text,category,metoo_count:1,solution_count:0,author_name:getDisplayName(),author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null}).select().single();
+  const{data,error}=await db.from('problems').insert({text,category,metoo_count:1,solution_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null}).select().single();
   btn.disabled=false;btn.textContent='Submit →';
   if(error){showToast('Something went wrong. Please try again.');return;}
   closeModal();document.getElementById('problemText').value='';
@@ -1114,6 +1167,7 @@ function openSolutionModal(problemId,problemText){
   currentSolutionProblemId=problemId;
   document.getElementById('solutionProblemTitle').textContent=problemText;
   document.getElementById('solutionText').value='';
+  populateNameInputs();
   updatePostingAs();
   document.getElementById('solutionOverlay').classList.add('open');
   document.body.style.overflow='hidden';
@@ -1125,19 +1179,21 @@ async function submitSolution(){
   const text=document.getElementById('solutionText').value.trim();
   if(!text){showToast('Please describe your solution first.');return;}
   if(!currentSolutionProblemId)return;
+  const authorName=getUserName();
   const btn=document.getElementById('solutionSubmitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
-  const{error}=await db.from('solutions').insert({problem_id:currentSolutionProblemId,text,helpful_count:0,author_name:getDisplayName(),author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null});
+  const nowIso=new Date().toISOString();
+  const{error}=await db.from('solutions').insert({problem_id:currentSolutionProblemId,text,helpful_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null});
   if(error){btn.disabled=false;btn.textContent='Submit Solution →';showToast('Something went wrong.');return;}
   const p=allProblems.find(x=>x.id===currentSolutionProblemId);
   if(p){
     p.solution_count=(p.solution_count||0)+1;
     if(!p.solutions)p.solutions=[];
-    p.solutions.push({id:Date.now(),text,helpful_count:0,author_name:getDisplayName(),author_avatar:getAvatar(),author_avatar_type:identity?.avatarType,author_avatar_data:isPhotoAvatar()?identity.avatarData:null});
+    p.solutions.push({id:Date.now(),text,helpful_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType,author_avatar_data:isPhotoAvatar()?identity.avatarData:null,created_at:nowIso});
     await db.from('problems').update({solution_count:p.solution_count}).eq('id',currentSolutionProblemId);
   }
   btn.disabled=false;btn.textContent='Submit Solution →';
-  closeSolutionModal();render();
+  closeSolutionModal();render();fetchStats();
   showToast('✅ Solution added! Thank you.');
 }
 
