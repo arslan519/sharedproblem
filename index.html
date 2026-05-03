@@ -396,6 +396,10 @@
       .mobile-cats{display:none;}/* hidden — categories now live in the drawer only */
       .nav-links{display:none;}
       .hamburger-btn{display:inline-flex;align-items:center;justify-content:center;}
+      /* Bigger touch targets in drawer */
+      .sidebar-left .cat-item{padding:14px 14px;font-size:14px;min-height:48px;}
+      .sidebar-left .cat-list{gap:6px;}
+      .sidebar-left .cat-icon{font-size:18px;}
       .about-values{grid-template-columns:1fr;}
       .footer-top{flex-direction:column;gap:24px;}
     }
@@ -1026,8 +1030,9 @@ function render(){
   const q=getQuery().toLowerCase();
   const list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
   document.getElementById('feedCount').textContent=list.length+' problems';
-  document.getElementById('feedLabel').textContent=q?'Search Results for "'+getQuery()+'"':'Most Shared Right Now';
-  document.getElementById('feedLabel').style.color=q?'var(--orange)':'rgba(255,255,255,0.22)';
+  const label=q?'Search Results for "'+getQuery()+'"':(activeCat&&activeCat!=='All'?'Showing: '+activeCat:'Most Shared Right Now');
+  document.getElementById('feedLabel').textContent=label;
+  document.getElementById('feedLabel').style.color=(q||(activeCat&&activeCat!=='All'))?'var(--orange)':'rgba(255,255,255,0.22)';
   const container=document.getElementById('problemFeed');
   if(list.length===0){
     container.innerHTML=`<div class="empty"><div class="empty-icon">🌱</div><div class="empty-text">No one has shared this yet.<br/><span class="empty-link" onclick="openModal()">Be the first →</span></div></div>`;
@@ -1162,7 +1167,10 @@ function filterCat(el,cat){
   el.classList.add('active');
   document.querySelectorAll('.mobile-cat-btn').forEach(b=>b.classList.toggle('active',b.textContent.includes(cat==='All'?'All':cat)));
   render();
-  closeDrawer();
+  // Scroll feed to top so user clearly sees the new filtered list
+  window.scrollTo({top:0,behavior:'smooth'});
+  // Brief delay so the user sees the highlight before drawer slides away
+  setTimeout(closeDrawer,180);
 }
 
 function filterCatMobile(el,cat){
