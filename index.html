@@ -791,7 +791,6 @@
       <option value="Habits">Habits</option>
       <option value="Productivity">Productivity</option>
       <option value="Self-Doubt">Self-Doubt</option>
-      <option value="General">General</option>
     </select>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeModal()">Cancel</button>
@@ -1070,12 +1069,10 @@ async function init(){
 }
 
 async function seedIfEmpty(){
-  const{data}=await db.from('problems').select('id').limit(1);
-  if(data&&data.length>0)return;
-  for(const p of seedData){
-    const{data:ins}=await db.from('problems').insert({text:p.text,category:p.category,metoo_count:p.metoo_count,solution_count:p.solution_count,author_name:'Shared Problem',author_avatar:'🤔'}).select().single();
-    if(ins&&p.sol)await db.from('solutions').insert({problem_id:ins.id,text:p.sol,helpful_count:0,author_name:'Shared Problem',author_avatar:'🤔'});
-  }
+  // Auto-seed disabled: seed content is now managed via supabase-realistic-seed.sql
+  // (run manually in the Supabase SQL editor). Re-enabling this would bring back
+  // the legacy hardcoded categories (Work/Health/etc.) which would all display as "Misc".
+  return;
 }
 
 async function loadProblems(){
@@ -1109,7 +1106,7 @@ function updateStats(){
 
 // Single source of truth for the active category list
 const KNOWN_CATEGORIES=['Burnout','Career','Mental Health','Sleep','Debt','Side Hustle','Loneliness','Dating','Habits','Productivity','Self-Doubt'];
-const CATEGORY_FALLBACK='General';
+const CATEGORY_FALLBACK='Misc';
 
 // Catch-all: if a problem has an old/unknown category (e.g. legacy "Work"),
 // show "General" in the UI so the card never looks broken.
