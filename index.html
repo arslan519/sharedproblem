@@ -177,6 +177,22 @@
     .trend-pill{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:5px 12px;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
     .trend-pill:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
 
+    /* Single-problem view header (back button + share) */
+    .single-header{display:none;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+    body.single-mode .single-header{display:flex;}
+    body.single-mode .trending,body.single-mode .feed-header,body.single-mode .mobile-cats{display:none;}
+    .back-btn{background:none;border:1px solid var(--border);color:var(--text2);font-family:'DM Mono',monospace;font-size:12px;padding:8px 14px;border-radius:9px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+    .back-btn:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
+    .share-btn-single{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:9px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;box-shadow:0 3px 12px rgba(251,146,60,0.3);transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+    .share-btn-single:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(251,146,60,0.45);}
+    /* Make card text feel like a link */
+    .card-text{cursor:pointer;transition:color 0.18s;}
+    .card-text:hover{color:var(--orange);}
+    /* On single-problem page, force the card to look expanded */
+    body.single-mode .card{cursor:default;}
+    body.single-mode .card .card-text{cursor:default;}
+    body.single-mode .card .card-text:hover{color:var(--text);}
+
     /* Feed header */
     .feed-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
     .feed-label{font-size:10px;letter-spacing:2px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.22);text-transform:uppercase;}
@@ -536,6 +552,12 @@
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Money')">💰 Money</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Tech')">💻 Tech</button>
         <button class="mobile-cat-btn" onclick="filterCatMobile(this,'Relationships')">❤️ Relationships</button>
+      </div>
+
+      <!-- Single-problem header (back to feed + share) -->
+      <div class="single-header" id="singleHeader">
+        <button class="back-btn" type="button" onclick="showFeed()">← Back to feed</button>
+        <button class="share-btn-single" type="button" onclick="shareCurrentProblem()">🔗 Share this problem</button>
       </div>
 
       <!-- Trending -->
@@ -939,6 +961,8 @@ const seedData=[
 
 let allProblems=[];
 let activeCat='All';
+let currentProblemId=null;  // when set, render() shows only this one problem
+const DEFAULT_TITLE='Shared Problem — You Are Not Alone';
 let metooed=JSON.parse(localStorage.getItem('sp_metooed')||'{}');
 let helpfulVoted=JSON.parse(localStorage.getItem('sp_helpful')||'{}');
 
@@ -986,6 +1010,8 @@ async function init(){
   }
   await seedIfEmpty();
   await loadProblems();
+  // After data is loaded, check the URL — if ?p=ID is present, jump straight to that problem
+  handleRouting({fromHistory:true});
 }
 
 async function seedIfEmpty(){
@@ -1036,9 +1062,22 @@ function updateCatCounts(){
 }
 
 function render(){
-  const q=getQuery().toLowerCase();
-  const list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
+  let list;
+  if(currentProblemId!==null){
+    // Single-problem view: show only one card, auto-expanded
+    document.body.classList.add('single-mode');
+    list=allProblems.filter(p=>p.id===currentProblemId);
+    if(list.length===0){
+      document.getElementById('problemFeed').innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Problem not found.<br/><span class="empty-link" onclick="showFeed()">← Back to all problems</span></div></div>`;
+      return;
+    }
+  } else {
+    document.body.classList.remove('single-mode');
+    const q=getQuery().toLowerCase();
+    list=allProblems.filter(p=>(activeCat==='All'||p.category===activeCat)&&(q===''||p.text.toLowerCase().includes(q)));
+  }
   document.getElementById('feedCount').textContent=list.length+' problems';
+  const q=getQuery().toLowerCase();
   const label=q?'Search Results for "'+getQuery()+'"':(activeCat&&activeCat!=='All'?'Showing: '+activeCat:'Most Shared Right Now');
   document.getElementById('feedLabel').textContent=label;
   document.getElementById('feedLabel').style.color=(q||(activeCat&&activeCat!=='All'))?'var(--orange)':'rgba(255,255,255,0.22)';
@@ -1073,16 +1112,19 @@ function render(){
         </div>`;
       }).join('')
       :`<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first!</div>`;
-    return `<div class="card" id="card-${p.id}" onclick="toggleCard(${p.id})" style="animation-delay:${i*45}ms">
+    const isSingle=currentProblemId===p.id;
+    const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
+    const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
+    return `<div class="card${isSingle?' expanded':''}" id="card-${p.id}" ${cardOnclick} style="animation-delay:${i*45}ms">
       <div class="card-top">
         <div class="card-body">
           <div class="card-cat">${p.category}</div>
           ${chip}
-          <div class="card-text">${p.text}</div>
+          <div class="card-text" ${textOnclick}>${p.text}</div>
           <div class="card-meta">
             <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
-            <span class="card-meta-dot"> · </span>
-            <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>
+            ${isSingle?'':`<span class="card-meta-dot"> · </span>
+            <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>`}
           </div>
         </div>
         <button class="metoo-btn${m?' active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
@@ -1229,6 +1271,78 @@ function filterCatMobile(el,cat){
   render();
 }
 
+// ── Single-problem routing ───────────────────
+function escapeForTitle(s){
+  if(!s)return'';
+  return s.replace(/\s+/g,' ').trim().slice(0,80);
+}
+
+function showSingleProblem(id, opts){
+  opts=opts||{};
+  currentProblemId=id;
+  // Make sure the home page is the active one (single-problem view lives in the feed area)
+  const homePage=document.getElementById('page-home');
+  if(homePage&&!homePage.classList.contains('active')){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    homePage.classList.add('active');
+  }
+  // Update the URL via pushState (no page reload). Skip if we're just responding to a popstate.
+  if(!opts.fromHistory){
+    history.pushState({problemId:id},'','?p='+id);
+  }
+  // Update document title for the single problem
+  const p=allProblems.find(x=>x.id===id);
+  document.title=p?('Problem: '+escapeForTitle(p.text)+' | Shared Problem'):DEFAULT_TITLE;
+  render();
+  window.scrollTo(0,0);
+}
+
+function showFeed(opts){
+  opts=opts||{};
+  currentProblemId=null;
+  if(!opts.fromHistory){
+    history.pushState({},'','/');
+  }
+  document.title=DEFAULT_TITLE;
+  render();
+}
+
+function shareCurrentProblem(){
+  if(currentProblemId===null){showToast('Open a problem first to share it.');return;}
+  const url=window.location.origin+'/?p='+currentProblemId;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(
+      ()=>showToast('🔗 Link copied!'),
+      ()=>fallbackCopy(url)
+    );
+  }else fallbackCopy(url);
+}
+
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');showToast('🔗 Link copied!');}
+  catch(e){showToast('Copy failed — long-press to copy: '+text);}
+  document.body.removeChild(ta);
+}
+
+// Read ?p=ID from URL and switch to single-problem mode if present.
+// Called on page load (after data is fetched) and on browser back/forward.
+function handleRouting(opts){
+  const params=new URLSearchParams(window.location.search);
+  const pid=params.get('p');
+  if(pid){
+    const id=parseInt(pid,10);
+    if(!isNaN(id))showSingleProblem(id,{fromHistory:true});
+    else showFeed({fromHistory:true});
+  } else {
+    if(currentProblemId!==null)showFeed({fromHistory:true});
+  }
+}
+
+window.addEventListener('popstate',function(){handleRouting({fromHistory:true});});
+
 // ── Modals ────────────────────────────────────
 function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -1238,6 +1352,10 @@ function showPage(name){
   // Show search bar only on home page
   const header=document.querySelector('.sticky-header');
   if(header) header.classList.toggle('hide-search',name!=='home');
+  // If user explicitly clicked Home from anywhere, clear any single-problem view
+  if(name==='home'&&currentProblemId!==null)showFeed();
+  // Going to a non-home page clears single mode visually too
+  if(name!=='home'&&currentProblemId!==null){currentProblemId=null;document.body.classList.remove('single-mode');document.title=DEFAULT_TITLE;}
   window.scrollTo(0,0);
 }
 
@@ -1274,6 +1392,13 @@ document.addEventListener('click', function(e){
   e.stopPropagation();
 
   const categoryName=catLink.getAttribute('data-category')||catLink.dataset.cat;
+
+  // If we're on a single-problem page, return to the feed first so the filter is visible
+  if(currentProblemId!==null){
+    currentProblemId=null;
+    history.pushState({},'','/');
+    document.title=DEFAULT_TITLE;
+  }
 
   if(typeof filterCat==='function'){
     filterCat(catLink,categoryName);
