@@ -827,8 +827,12 @@ function renderNavProfile(){
 }
 
 function getUserName(){
+  // Prefer the explicit user_name (typed in a share modal). Fall back to the welcome/profile
+  // identity name so first-time users who set a nickname via the welcome modal don't see "Anonymous".
   const v=(localStorage.getItem('user_name')||'').trim();
-  return v||'Anonymous';
+  if(v)return v;
+  const idName=(identity&&identity.name||'').trim();
+  return idName||'Anonymous';
 }
 
 function updatePostingAs(){
@@ -840,7 +844,12 @@ function updatePostingAs(){
 }
 
 function populateNameInputs(){
-  const stored=localStorage.getItem('user_name')||'';
+  // Prefer user_name; fall back to identity.name (skip "Anonymous" placeholder)
+  let stored=localStorage.getItem('user_name')||'';
+  if(!stored){
+    const idName=(identity&&identity.name||'').trim();
+    if(idName&&idName!=='Anonymous')stored=idName;
+  }
   ['problemNameInput','solutionNameInput'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.value=stored;
@@ -894,18 +903,20 @@ function saveIdentity(){
   const name=document.getElementById('nicknameInput').value.trim();
   identity={name:name||'Anonymous',avatar:uploadedAvatarData?'🌀':selectedEmoji,avatarType:uploadedAvatarData?'photo':'emoji',avatarData:uploadedAvatarData||null};
   localStorage.setItem('sp_identity',JSON.stringify(identity));
+  localStorage.setItem('user_name',name);  // keep share-modal name in sync
   localStorage.setItem('sp_welcomed','1');
   document.getElementById('welcomeOverlay').classList.add('hidden');
-  renderNavProfile();updatePostingAs();
+  renderNavProfile();updatePostingAs();populateNameInputs();
   showToast('✅ Welcome, '+getDisplayName()+'!');
 }
 
 function skipIdentity(){
   identity={name:'Anonymous',avatar:'🌀',avatarType:'emoji',avatarData:null};
   localStorage.setItem('sp_identity',JSON.stringify(identity));
+  localStorage.setItem('user_name','');  // explicit anonymous
   localStorage.setItem('sp_welcomed','1');
   document.getElementById('welcomeOverlay').classList.add('hidden');
-  renderNavProfile();
+  renderNavProfile();updatePostingAs();populateNameInputs();
 }
 
 let profileSelectedEmoji='🦊';
@@ -943,7 +954,8 @@ function updateProfile(){
   const hasPhoto=big.querySelector('img')&&profileUploadedData;
   identity={name:name||'Anonymous',avatar:hasPhoto?'🌀':profileSelectedEmoji,avatarType:hasPhoto?'photo':'emoji',avatarData:hasPhoto?profileUploadedData:null};
   localStorage.setItem('sp_identity',JSON.stringify(identity));
-  closeProfileModal();renderNavProfile();updatePostingAs();render();
+  localStorage.setItem('user_name',name);  // keep share-modal name in sync
+  closeProfileModal();renderNavProfile();updatePostingAs();populateNameInputs();render();
   showToast('✅ Profile updated!');
 }
 
