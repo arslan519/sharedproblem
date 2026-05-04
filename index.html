@@ -247,13 +247,14 @@
     .metoo-count{font-size:12px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text2);transition:all 0.2s;display:inline-block;}
     .metoo-btn.active .metoo-count{color:var(--orange);}
     @keyframes countPop{0%{transform:scale(1);}40%{transform:scale(1.45);color:var(--orange);}100%{transform:scale(1);}}
-    .metoo-count.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
+    .metoo-count.pop,.helpful-count.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);}
     .stat-row-val.pop{animation:countPop 0.45s cubic-bezier(0.34,1.56,0.64,1);display:inline-block;}
     .metoo-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);}
     .metoo-btn.active .metoo-label{color:var(--orange);}
 
-    /* Card expanded — tighter spacing for compact feel */
-    .card-expanded{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);}
+    /* Card expanded — tighter spacing for compact feel.
+       border-top separates the solutions area from the problem text minimally but clearly. */
+    .card-expanded{display:none;margin-top:10px;padding-top:12px;border-top:1px solid #2a2a2e;}
     .card.expanded .card-expanded{display:block;animation:fadeUp 0.3s ease;}
     .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
     .solution-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
@@ -262,16 +263,20 @@
     .sol-author{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap;}
     .sol-author-avatar{width:16px;height:16px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
     .sol-author-avatar img{width:100%;height:100%;object-fit:cover;}
-    .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:#888;}
+    .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:#888;font-style:italic;}
     /* Solution body — flat, just a left rule. No background, no full border. */
     .solution-box{background:none;border:none;border-left:2px solid var(--orange);border-radius:0;padding:2px 0 2px 12px;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
     /* Ghost-style helpful button */
     .helpful-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all 0.2s;}
     .helpful-btn:hover{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);}
     .helpful-btn.voted{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);cursor:default;pointer-events:none;}
-    .helpful-icon{font-size:11px;}
-    .helpful-text{font-size:10px;font-family:'DM Mono',monospace;color:var(--muted);}
-    .helpful-btn:hover .helpful-text,.helpful-btn.voted .helpful-text{color:var(--green);}
+    .helpful-icon{font-size:12px;line-height:1;}
+    .helpful-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);font-weight:600;}
+    .helpful-btn:hover .helpful-count,.helpful-btn.voted .helpful-count{color:var(--green);}
+    /* Solution footer — flex row containing the thumbs-up button + Thoughts link */
+    .solution-footer{display:flex;align-items:center;gap:14px;margin-top:6px;}
+    .thoughts-link{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:none;cursor:pointer;transition:color 0.18s;}
+    .thoughts-link:hover{color:var(--orange);}
     .solution-actions{margin-top:10px;}
     .sol-btn{border-radius:8px;padding:6px 12px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
     /* Ghost-style add-solution button */
@@ -1163,19 +1168,22 @@ function render(){
       ?sols.map((s,idx)=>{
         const voted=helpfulVoted[s.id];
         const hc=s.helpful_count||0;
-        const label=hc>0?hc+' '+(hc===1?'person':'people')+' found this helpful':'Was this helpful?';
         const sTs=getRelativeTime(s.created_at);
         const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
-        const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">Solution by ${s.author_name||'Anonymous'}</span>${sTsHTML}</div>`;
+        const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
+        const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
         return `<div class="solution-item">
           <div class="solution-num">${idx+1}</div>
           <div class="solution-body">
             ${sChip}
             <div class="solution-box">"${s.text}"</div>
-            <button class="helpful-btn${voted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})">
-              <span class="helpful-icon">👍</span>
-              <span class="helpful-text" id="helpful-text-${s.id}">${label}</span>
-            </button>
+            <div class="solution-footer">
+              <button class="helpful-btn${voted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})" aria-label="Mark helpful">
+                <span class="helpful-icon">👍</span>
+                <span class="helpful-count" id="helpful-count-${s.id}">${hc}</span>
+              </button>
+              <a class="thoughts-link" href="#" onclick="event.preventDefault();event.stopPropagation();openSolutionModal(${p.id},\`${p.text.replace(/`/g,"'")}\`);return false;">Thoughts →</a>
+            </div>
           </div>
         </div>`;
       }).join('')
@@ -1198,7 +1206,6 @@ function render(){
         <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>`}
       </div>
       <div class="card-expanded">
-        <div class="solution-label">✦ ${solCount>0?solCount+' Solution'+(solCount!==1?'s':'')+' — ranked by helpfulness':'No Solutions Yet'}</div>
         ${solsHTML}
         <div class="solution-actions">
           <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id},\`${p.text.replace(/`/g,"'")}\`)">+ Add your solution</button>
@@ -1293,8 +1300,8 @@ async function markHelpful(solId,problemId){
   await db.from('solutions').update({helpful_count:newCount}).eq('id',solId);
   const p=allProblems.find(x=>x.id===problemId);
   if(p&&p.solutions){const s=p.solutions.find(x=>x.id===solId);if(s)s.helpful_count=newCount;}
-  const textEl=document.getElementById('helpful-text-'+solId);
-  if(textEl)textEl.textContent=newCount+' '+(newCount===1?'person':'people')+' found this helpful';
+  const countEl=document.getElementById('helpful-count-'+solId);
+  if(countEl){countEl.textContent=newCount;popAnimate(countEl);}
   showToast('👍 Marked as helpful!');
 }
 
