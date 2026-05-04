@@ -196,15 +196,11 @@
     .search-highlight{background:rgba(251,146,60,0.28);color:var(--orange);border-radius:3px;padding:0 2px;font-weight:600;}
 
     /* Trending pills */
-    .trending{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
-    .trending-label{font-size:10px;font-family:var(--font);color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-right:2px;}
-    .trend-pill{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:5px 12px;font-size:11px;font-family:var(--font);color:var(--muted);cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-    .trend-pill:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
 
     /* Single-problem view header (back button + share) */
     .single-header{display:none;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
     body.single-mode .single-header{display:flex;}
-    body.single-mode .trending,body.single-mode .feed-header,body.single-mode .mobile-cats{display:none;}
+    body.single-mode .feed-header,body.single-mode .mobile-cats{display:none;}
     .back-btn{background:none;border:1px solid var(--border);color:var(--text2);font-family:var(--font);font-size:12px;padding:8px 14px;border-radius:9px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
     .back-btn:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
     .share-btn-single{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:9px;padding:8px 16px;color:#fff;font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;box-shadow:0 3px 12px rgba(251,146,60,0.3);transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
@@ -653,15 +649,6 @@
       <div class="single-header" id="singleHeader">
         <button class="back-btn" type="button" onclick="showFeed()">← Back to feed</button>
         <button class="share-btn-single" type="button" onclick="shareCurrentProblem()">🔗 Share this problem</button>
-      </div>
-
-      <!-- Trending -->
-      <div class="trending">
-        <span class="trending-label">↑</span>
-        <span class="trend-pill" onclick="fillSearch(this)">Zoom fatigue</span>
-        <span class="trend-pill" onclick="fillSearch(this)">Groceries too expensive</span>
-        <span class="trend-pill" onclick="fillSearch(this)">Feel invisible at work</span>
-        <span class="trend-pill" onclick="fillSearch(this)">Cannot fall asleep</span>
       </div>
 
       <!-- Feed header -->
@@ -1497,11 +1484,6 @@ function clearSearch(){
 function doSearch(){
   // Just trigger the same live filter — no extra logic needed
   onSearchInput();
-}
-
-function fillSearch(el){
-  const input=document.getElementById('mainSearch');
-  if(input){ input.value=el.textContent; onSearchInput(); }
 }
 
 function filterCat(el,cat){
