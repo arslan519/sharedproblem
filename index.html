@@ -1849,14 +1849,23 @@ function fadeOutAndRemove(el){
   });
 }
 
+// Helper: shows the standard "RLS likely blocking" error. The most common cause
+// of silent delete failure is a missing DELETE policy in Supabase Row Level Security.
+function rlsBlockedError(table){
+  console.error('[delete] '+table+' delete returned 0 rows — likely RLS policy missing. Run supabase-add-delete-policies.sql in Supabase.');
+  showToast('Could not delete from '+table+'. Run the DELETE policy SQL in Supabase.');
+}
+
 async function deleteProblem(id){
   if(!confirm('Delete this problem and all its thoughts? This cannot be undone.'))return;
   // Cascade: delete every solution for this problem first.
-  // (Solutions table doesn't have ON DELETE CASCADE on problem_id — explicit delete is required.)
-  const{error:solErr}=await db.from('solutions').delete().eq('problem_id',id);
-  if(solErr){showToast('Could not delete thoughts: '+(solErr.message||'unknown'));return;}
-  const{error}=await db.from('problems').delete().eq('id',id).eq('author_id',getUserId());
-  if(error){showToast('Could not delete: '+(error.message||'unknown'));return;}
+  // .select() forces Supabase to return the deleted rows so we can detect silent
+  // RLS blocks (which return error=null but data=[] — no rows actually deleted).
+  const{data:solData,error:solErr}=await db.from('solutions').delete().eq('problem_id',id).select();
+  if(solErr){console.error(solErr);showToast('Could not delete thoughts: '+(solErr.message||'unknown'));return;}
+  const{data:probData,error}=await db.from('problems').delete().eq('id',id).eq('author_id',getUserId()).select();
+  if(error){console.error(error);showToast('Could not delete: '+(error.message||'unknown'));return;}
+  if(!probData||probData.length===0){rlsBlockedError('problems');return;}
   // Visual feedback before rebuilding the feed
   await fadeOutAndRemove(document.getElementById('card-'+id));
   allProblems=allProblems.filter(p=>p.id!==id);
@@ -1868,12 +1877,12 @@ async function deleteProblem(id){
 async function deleteThought(id,problemId){
   if(!confirm('Delete this thought? Any replies under it will also be deleted.'))return;
   // Cascade: explicitly delete all replies (rows where parent_id = this thought).
-  // Doubles as a safety net if the parent_id ON DELETE CASCADE constraint isn't in place.
-  const{error:repErr}=await db.from('solutions').delete().eq('parent_id',id);
-  if(repErr){showToast('Could not delete replies: '+(repErr.message||'unknown'));return;}
-  // Then delete the thought itself, gated by author_id.
-  const{error}=await db.from('solutions').delete().eq('id',id).eq('author_id',getUserId());
-  if(error){showToast('Could not delete: '+(error.message||'unknown'));return;}
+  const{error:repErr}=await db.from('solutions').delete().eq('parent_id',id).select();
+  if(repErr){console.error(repErr);showToast('Could not delete replies: '+(repErr.message||'unknown'));return;}
+  // Then delete the thought itself, gated by author_id. .select() lets us detect RLS blocks.
+  const{data,error}=await db.from('solutions').delete().eq('id',id).eq('author_id',getUserId()).select();
+  if(error){console.error(error);showToast('Could not delete: '+(error.message||'unknown'));return;}
+  if(!data||data.length===0){rlsBlockedError('solutions');return;}
   // Update local state
   const p=allProblems.find(x=>x.id===problemId);
   if(p&&p.solutions){
