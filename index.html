@@ -1227,11 +1227,13 @@ function render(){
       ?topThoughts.map(t=>{
         const replies=(repliesByParent[t.id]||[]).map(r=>renderOne(r,true)).join('');
         const repliesBlock=replies?`<div class="reply-list">${replies}</div>`:'';
-        // Wrap replies + reply input in one indented container so they share the 32px margin
-        const repliesContainer=`<div class="thought-replies">
+        // Wrap replies + reply input in one indented container so they share the 32px margin.
+        // The reply input carries data-parent-id so the submit handler can read it directly
+        // (don't rely solely on the closure parameter — defensive double-source).
+        const repliesContainer=`<div class="thought-replies" data-parent-id="${t.id}">
           ${repliesBlock}
           <form class="reply-input-form ghost-input-form" onsubmit="submitReply(event,${t.id},${p.id})" onclick="event.stopPropagation()">
-            <input type="text" class="ghost-input reply-input" id="reply-input-${t.id}" placeholder="Add a thought…" maxlength="500" autocomplete="off"/>
+            <input type="text" class="ghost-input reply-input" id="reply-input-${t.id}" data-parent-id="${t.id}" data-problem-id="${p.id}" placeholder="Add a thought…" maxlength="500" autocomplete="off"/>
           </form>
         </div>`;
         return renderOne(t,false)+repliesContainer;
@@ -1647,13 +1649,17 @@ async function submitSolution(){
 
 // Single insert path for both top-level thoughts and nested replies.
 // parentId is the parent solution.id for replies, or null for top-level thoughts.
+// Always coerce parentId to a Number — DOM data-* attributes return strings, and the
+// rendering filter does strict-equality comparisons against numeric IDs.
 async function postThought(problemId,text,parentId){
   const clean=(text||'').trim();
   if(!clean)return false;
+  const pid=problemId?Number(problemId):null;
+  const parent=parentId?Number(parentId):null;
   const authorName=getUserName();
   const nowIso=new Date().toISOString();
   const payload={
-    problem_id:problemId,
+    problem_id:pid,
     text:clean,
     helpful_count:0,
     author_name:authorName,
@@ -1661,15 +1667,27 @@ async function postThought(problemId,text,parentId){
     author_avatar_type:identity?.avatarType||'emoji',
     author_avatar_data:isPhotoAvatar()?identity.avatarData:null
   };
-  if(parentId)payload.parent_id=parentId;
+  if(parent)payload.parent_id=parent;
   const{data,error}=await db.from('solutions').insert(payload).select().single();
   if(error){showToast('Something went wrong: '+(error.message||'unknown'));return false;}
-  const p=allProblems.find(x=>x.id===problemId);
+
+  // Build the row to push into local state. We start from server `data` if returned,
+  // and DEFENSIVELY ensure parent_id is set even if the server dropped it (which
+  // happens silently when the DB column doesn't exist yet — i.e. the SQL migration
+  // hasn't been run). Without this, replies would appear as top-level locally.
+  const newRow=data?{...data}:{...payload,id:Date.now(),created_at:nowIso};
+  if(parent&&!newRow.parent_id){
+    newRow.parent_id=parent;
+    // The server returned a row without parent_id → schema mismatch
+    showToast('⚠️ Reply saved locally. Run the SQL migration to persist replies.');
+  }
+
+  const p=allProblems.find(x=>x.id===pid);
   if(p){
     if(!p.solutions)p.solutions=[];
-    p.solutions.push(data||{...payload,id:Date.now(),created_at:nowIso});
+    p.solutions.push(newRow);
     p.solution_count=(p.solution_count||0)+1;
-    db.from('problems').update({solution_count:p.solution_count}).eq('id',problemId).then(()=>{});
+    db.from('problems').update({solution_count:p.solution_count}).eq('id',pid).then(()=>{});
   }
   return true;
 }
@@ -1690,8 +1708,15 @@ async function submitReply(event,thoughtId,problemId){
   event.preventDefault();event.stopPropagation();
   const input=event.target.querySelector('input');
   if(!input)return;
+  // Source of truth: data-parent-id attribute on the input itself. Falls back to
+  // the function-arg thoughtId. Coerced to Number — DOM attributes are strings.
+  const parentFromAttr=input.getAttribute('data-parent-id');
+  const parentId=Number(parentFromAttr||thoughtId);
+  const probFromAttr=input.getAttribute('data-problem-id');
+  const probId=Number(probFromAttr||problemId);
+  if(!parentId){showToast('Could not link reply to its parent thought.');return;}
   const text=input.value;
-  const ok=await postThought(problemId,text,thoughtId);
+  const ok=await postThought(probId,text,parentId);
   if(!ok)return;
   input.value='';
   render();fetchStats();
