@@ -257,13 +257,17 @@
     .card-expanded{display:none;margin-top:10px;padding-top:12px;border-top:1px solid #2a2a2e;}
     .card.expanded .card-expanded{display:block;animation:fadeUp 0.3s ease;}
     .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
-    .solution-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;}
-    .solution-num{width:18px;height:18px;min-width:18px;background:var(--orange-dim);border:1px solid var(--orange-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;color:var(--orange);font-weight:600;margin-top:2px;}
-    .solution-body{flex:1;}
-    .sol-author{display:flex;align-items:center;gap:5px;margin-bottom:5px;flex-wrap:wrap;}
-    .sol-author-avatar{width:16px;height:16px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
+    /* Thoughts are now plain blocks — no numbered badge, no leading flex column */
+    .solution-item{margin-bottom:14px;}
+    .solution-body{}
+    /* Author header — profile pic + name horizontally aligned */
+    .sol-author{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+    .sol-author-avatar{width:32px;height:32px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
     .sol-author-avatar img{width:100%;height:100%;object-fit:cover;}
-    .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:#888;font-style:italic;}
+    .sol-author-name{font-size:12px;font-family:'DM Mono',monospace;color:#aaa;font-style:italic;}
+    /* Replies use a smaller avatar to keep the indent visually lighter */
+    .reply-item .sol-author-avatar{width:22px;height:22px;font-size:13px;}
+    .reply-item .sol-author-name{font-size:11px;}
     /* Solution body — fully flat. No background, no border, no left rule. */
     .solution-box{background:none;border:none;border-radius:0;padding:0;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
     /* Ghost-style helpful button */
@@ -1248,7 +1252,7 @@ function render(){
       const sTs=getRelativeTime(s.created_at);
       const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
       const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
-      const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
+      const sChip=`<div class="sol-author"><div class="sol-author-avatar">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
       const replyCount=isReply?0:(repliesByParent[s.id]||[]).length;
       const isEditingThis=editingThoughtId===s.id;
       const thoughtAuthor=isAuthor(s);
@@ -1272,7 +1276,6 @@ function render(){
             ${thoughtActions}
           </div>`;
       return `<div class="${isReply?'reply-item':'solution-item'}">
-        ${isReply?'':'<div class="solution-num"></div>'}
         <div class="solution-body">
           ${sChip}
           ${bodyHTML}
