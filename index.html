@@ -256,7 +256,6 @@
        border-top separates the solutions area from the problem text minimally but clearly. */
     .card-expanded{display:none;margin-top:10px;padding-top:12px;border-top:1px solid #2a2a2e;}
     .card.expanded .card-expanded{display:block;animation:fadeUp 0.3s ease;}
-    .solution-label{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:2px;color:var(--orange);text-transform:uppercase;margin-bottom:8px;}
     /* Thoughts are now plain blocks — no numbered badge, no leading flex column */
     .solution-item{margin-bottom:14px;}
     .solution-body{}
@@ -269,7 +268,9 @@
     .reply-item .sol-author-avatar{width:22px;height:22px;font-size:13px;}
     .reply-item .sol-author-name{font-size:11px;}
     /* Solution body — fully flat. No background, no border, no left rule. */
-    .solution-box{background:none;border:none;border-radius:0;padding:0;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
+    .solution-box{background:none;border:none;border-radius:0;padding:0;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;}
+    .card-text{overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;}
+    .replies-list{overflow-wrap:break-word;word-wrap:break-word;min-width:0;}
     /* Ghost-style helpful button */
     .helpful-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all 0.2s;}
     .helpful-btn:hover{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);}
@@ -295,8 +296,9 @@
     .edit-cancel{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;}
     .edit-cancel:hover{color:var(--text2);border-color:var(--border2);}
 
-    /* Thought footer — flex row: thumbs-up + reply count on same line */
-    .solution-footer{display:flex;align-items:center;gap:14px;margin-top:6px;}
+    /* Thought footer — flex row: thumbs-up + reply count on same line.
+       flex-wrap so Edit/Delete don't collide with helpful + reply count on narrow screens. */
+    .solution-footer{display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap;row-gap:6px;}
     .thoughts-link{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:none;cursor:pointer;transition:color 0.18s;background:none;border:none;padding:0;}
     .thoughts-link:hover{color:var(--orange);}
     /* Ghost input — for the main "What's your thought" and per-thought reply inputs */
@@ -332,11 +334,6 @@
     @media (max-width:600px){
       .replies-list{margin-left:16px;}
     }
-    .solution-actions{margin-top:10px;}
-    .sol-btn{border-radius:8px;padding:6px 12px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
-    /* Ghost-style add-solution button */
-    .sol-btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
-    .sol-btn-ghost:hover{border-color:var(--orange-border);color:var(--orange);background:transparent;}
 
     /* Loading / Empty */
     .loading{text-align:center;padding:48px 20px;}
@@ -726,7 +723,7 @@
       <h3>What We Believe</h3>
       <div class="about-values">
         <div class="value-card"><div class="value-icon">🔒</div><div class="value-title">Privacy First</div><div class="value-desc">No accounts, no tracking. Your problems stay anonymous.</div></div>
-        <div class="value-card"><div class="value-icon">🤝</div><div class="value-title">Real Help Only</div><div class="value-desc">Solutions from real people who actually tried them.</div></div>
+        <div class="value-card"><div class="value-icon">🤝</div><div class="value-title">Real Help Only</div><div class="value-desc">Thoughts from real people who actually went through it.</div></div>
         <div class="value-card"><div class="value-icon">❤️</div><div class="value-title">No Judgment</div><div class="value-desc">Every problem is valid. We exist to validate, not question.</div></div>
         <div class="value-card"><div class="value-icon">🌍</div><div class="value-title">Open to All</div><div class="value-desc">Free forever. Everyone deserves to feel less alone.</div></div>
       </div>
@@ -748,7 +745,7 @@
       <div class="legal-highlight"><strong>Short version:</strong> We collect almost nothing. No email required. Your problems are anonymous. Nicknames stored only in your browser.</div>
       <h2>What We Collect</h2>
       <ul>
-        <li>Problems and solutions you submit — stored with your chosen nickname and avatar only</li>
+        <li>Problems and thoughts you submit — stored with your chosen nickname and avatar only</li>
         <li>Me Too clicks — stored per browser using localStorage</li>
         <li>Nicknames and avatars — stored only in your browser, never on our servers</li>
       </ul>
@@ -759,7 +756,7 @@
         <li>Any payment information (the site is free)</li>
       </ul>
       <h2>Third Party Services</h2>
-      <p>We use Supabase to store submitted problems and solutions. We use Google Fonts for typography. No advertising networks or tracking pixels are used.</p>
+      <p>We use Supabase to store submitted problems and thoughts. We use Google Fonts for typography. No advertising networks or tracking pixels are used.</p>
       <h2>Contact</h2>
       <p>For privacy questions, use the Submit form on the homepage to reach us.</p>
     </div>
@@ -777,7 +774,7 @@
       <h2>What You Can Do</h2>
       <ul>
         <li>Submit real problems you or others genuinely face</li>
-        <li>Share solutions that have actually worked for you</li>
+        <li>Share thoughts and what actually worked for you</li>
         <li>Click Me Too on problems you relate to</li>
       </ul>
       <h2>What You Cannot Do</h2>
@@ -787,7 +784,7 @@
         <li>Attempt to scrape, hack, or disrupt the service</li>
       </ul>
       <h2>Disclaimer</h2>
-      <p>Solutions are community-sourced and not professional advice. Always consult a qualified professional for medical, legal, or financial decisions.</p>
+      <p>Thoughts shared here are community-sourced and not professional advice. Always consult a qualified professional for medical, legal, or financial decisions.</p>
       <p style="margin-top:24px;font-size:13px;color:var(--muted)">© 2026 Shared Problem. All rights reserved.</p>
     </div>
   </div>
@@ -863,16 +860,16 @@
 <div class="modal-overlay" id="solutionOverlay" onclick="closeSolutionOutside(event)">
   <div class="modal">
     <button class="modal-close" onclick="closeSolutionModal()">✕ close</button>
-    <h3>Add Your Solution</h3>
+    <h3>Add Your Thought</h3>
     <p class="modal-sub" id="solutionProblemTitle" style="color:var(--orange);font-style:italic;font-size:13px;margin-bottom:16px;"></p>
     <div class="modal-anon"><div class="anon-dot"></div>Posting as <strong id="solutionPostingAs">Anonymous</strong></div>
     <label style="margin-top:14px;">Your name (optional)</label>
     <input id="solutionNameInput" class="modal-name-input" type="text" maxlength="20" placeholder="Leave blank to post as Anonymous" oninput="onNameInput(this.value)"/>
     <label>What worked for you?</label>
-    <textarea id="solutionText" placeholder="Describe exactly what you did and why it worked..."></textarea>
+    <textarea id="solutionText" placeholder="Share what worked for you, or just what you'd say to a friend going through this..."></textarea>
     <div class="modal-actions">
       <button class="modal-cancel" onclick="closeSolutionModal()">Cancel</button>
-      <button class="modal-submit" id="solutionSubmitBtn" onclick="submitSolution()">Submit Solution →</button>
+      <button class="modal-submit" id="solutionSubmitBtn" onclick="submitSolution()">Submit Thought →</button>
     </div>
   </div>
 </div>
@@ -1721,7 +1718,7 @@ async function submitSolution(){
   const btn=document.getElementById('solutionSubmitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
   const ok=await postThought(currentSolutionProblemId,text,null);
-  btn.disabled=false;btn.textContent='Submit Solution →';
+  btn.disabled=false;btn.textContent='Submit Thought →';
   if(!ok)return;
   closeSolutionModal();render();fetchStats();
   showToast('💭 Thought added! Thank you.');
