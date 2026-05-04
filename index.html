@@ -304,10 +304,17 @@
     .ghost-input::placeholder{color:rgba(255,255,255,0.28);font-style:italic;}
     .thought-input{font-size:14px;padding:10px 4px;}
     /* Each main thought owns a sub-container for its replies + reply input.
-       The 32px left margin on the wrapper creates the threaded indent — no lines, no boxes. */
-    .thought-replies{margin-left:32px;margin-top:8px;display:flex;flex-direction:column;gap:6px;}
-    .reply-list{display:flex;flex-direction:column;gap:8px;}
-    .reply-item{display:flex;flex-direction:column;gap:4px;padding:6px 0;}
+       The 32px left margin on the wrapper creates the threaded indent —
+       no vertical line, no background box; whitespace alone signals nesting. */
+    .replies-list{
+      margin-left:32px;
+      padding-left:10px;
+      display:flex;
+      flex-direction:column;
+      gap:15px;
+      margin-top:8px;
+    }
+    .reply-item{display:flex;flex-direction:column;gap:4px;padding:0;}
     .reply-item .sol-author{margin-bottom:2px;}
     .reply-item .solution-box{font-size:12.5px;}
     .reply-item .solution-footer{margin-top:2px;}
@@ -317,7 +324,7 @@
     .reply-input::placeholder{color:rgba(255,255,255,0.22);}
     /* Tight horizontal indent on small screens */
     @media (max-width:600px){
-      .thought-replies{margin-left:16px;}
+      .replies-list{margin-left:16px;}
     }
     .solution-actions{margin-top:10px;}
     .sol-btn{border-radius:8px;padding:6px 12px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
@@ -1276,12 +1283,12 @@ function render(){
     const solsHTML=topThoughts.length>0
       ?topThoughts.map(t=>{
         const replies=(repliesByParent[t.id]||[]).map(r=>renderOne(r,true)).join('');
-        const repliesBlock=replies?`<div class="reply-list">${replies}</div>`:'';
-        // Wrap replies + reply input in one indented container so they share the 32px margin.
-        // The reply input carries data-parent-id so the submit handler can read it directly
-        // (don't rely solely on the closure parameter — defensive double-source).
-        const repliesContainer=`<div class="thought-replies" data-parent-id="${t.id}">
-          ${repliesBlock}
+        // Single .replies-list container holds both the replies AND the reply input.
+        // The 32px left margin on this container creates the indent — replies and input
+        // are aligned together, distinct from the parent thought above them.
+        // The reply input carries data-parent-id so the submit handler can read it directly.
+        const repliesContainer=`<div class="replies-list" data-parent-id="${t.id}">
+          ${replies}
           <form class="reply-input-form ghost-input-form" onsubmit="submitReply(event,${t.id},${p.id})" onclick="event.stopPropagation()">
             <input type="text" class="ghost-input reply-input" id="reply-input-${t.id}" data-parent-id="${t.id}" data-problem-id="${p.id}" placeholder="Add a thought…" maxlength="500" autocomplete="off"/>
           </form>
