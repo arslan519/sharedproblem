@@ -1156,7 +1156,9 @@ async function seedIfEmpty(){
 }
 
 async function loadProblems(){
-  const{data}=await db.from('problems').select('*,solutions(id,text,helpful_count,author_name,author_avatar,author_avatar_type,author_avatar_data)').order('metoo_count',{ascending:false});
+  // Use solutions(*) so we pick up author_id, parent_id, created_at, and any future columns.
+  // Without these, Edit/Delete buttons never appear on refresh and replies render as top-level.
+  const{data}=await db.from('problems').select('*,solutions(*)').order('metoo_count',{ascending:false});
   allProblems=data||[];
   updateStats();
   updateCatCounts();
