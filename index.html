@@ -273,10 +273,27 @@
     .helpful-icon{font-size:12px;line-height:1;}
     .helpful-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);font-weight:600;}
     .helpful-btn:hover .helpful-count,.helpful-btn.voted .helpful-count{color:var(--green);}
-    /* Solution footer — flex row containing the thumbs-up button + Thoughts link */
+    /* Thought footer — flex row: thumbs-up + reply count on same line */
     .solution-footer{display:flex;align-items:center;gap:14px;margin-top:6px;}
-    .thoughts-link{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:none;cursor:pointer;transition:color 0.18s;}
+    .thoughts-link{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:none;cursor:pointer;transition:color 0.18s;background:none;border:none;padding:0;}
     .thoughts-link:hover{color:var(--orange);}
+    /* Ghost input — for the main "What's your thought" and per-thought reply inputs */
+    .ghost-input-form{display:flex;margin:8px 0 4px;}
+    .ghost-input{
+      flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);
+      color:var(--text);font-family:'Lora',serif;font-size:13px;
+      padding:8px 4px;outline:none;transition:border-color 0.2s;
+    }
+    .ghost-input:focus{border-bottom-color:var(--orange-border);}
+    .ghost-input::placeholder{color:rgba(255,255,255,0.28);font-style:italic;}
+    .thought-input{font-size:14px;padding:10px 4px;}
+    /* Replies — indented 24px from parent thought, no border-left */
+    .reply-list{margin-left:24px;margin-top:8px;display:flex;flex-direction:column;gap:8px;}
+    .reply-item{display:flex;flex-direction:column;gap:4px;padding:6px 0;}
+    .reply-item .sol-author{margin-bottom:2px;}
+    .reply-item .solution-box{font-size:12.5px;}
+    .reply-item .solution-footer{margin-top:2px;}
+    .reply-input-form{margin-left:24px;margin-top:4px;}
     .solution-actions{margin-top:10px;}
     .sol-btn{border-radius:8px;padding:6px 12px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;transition:all 0.2s;}
     /* Ghost-style add-solution button */
@@ -576,7 +593,7 @@
         <div class="sidebar-title">Community Stats</div>
         <div class="stat-row"><span class="stat-row-label">Problems Shared</span><span class="stat-row-val" id="statProblems">...</span></div>
         <div class="stat-row"><span class="stat-row-label">Me Too Clicks</span><span class="stat-row-val" id="statMetoos">...</span></div>
-        <div class="stat-row"><span class="stat-row-label">Solutions Added</span><span class="stat-row-val" id="statSolutions">...</span></div>
+        <div class="stat-row"><span class="stat-row-label">Thoughts Shared</span><span class="stat-row-val" id="statSolutions">...</span></div>
       </div>
     </aside>
 
@@ -1160,34 +1177,58 @@ function render(){
     return;
   }
   container.innerHTML=list.map((p,i)=>{
-    const sols=[...(p.solutions||[])].sort((a,b)=>(b.helpful_count||0)-(a.helpful_count||0));
-    const solCount=sols.length;
+    // Split solutions into top-level thoughts and nested replies (parent_id != null)
+    const allSols=p.solutions||[];
+    const topThoughts=[...allSols].filter(s=>!s.parent_id).sort((a,b)=>(b.helpful_count||0)-(a.helpful_count||0));
+    const repliesByParent={};
+    allSols.filter(s=>s.parent_id).forEach(r=>{
+      (repliesByParent[r.parent_id]=repliesByParent[r.parent_id]||[]).push(r);
+    });
+    Object.values(repliesByParent).forEach(arr=>arr.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0)));
+    const totalCount=allSols.length;  // combined: thoughts + replies
     const m=metooed[p.id];
     const chip=authorChipHTML(p.author_name,p.author_avatar,p.author_avatar_type,p.author_avatar_data,p.created_at);
-    const solsHTML=sols.length>0
-      ?sols.map((s,idx)=>{
-        const voted=helpfulVoted[s.id];
-        const hc=s.helpful_count||0;
-        const sTs=getRelativeTime(s.created_at);
-        const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
-        const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
-        const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
-        return `<div class="solution-item">
-          <div class="solution-num">${idx+1}</div>
-          <div class="solution-body">
-            ${sChip}
-            <div class="solution-box">"${s.text}"</div>
-            <div class="solution-footer">
-              <button class="helpful-btn${voted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})" aria-label="Mark helpful">
-                <span class="helpful-icon">👍</span>
-                <span class="helpful-count" id="helpful-count-${s.id}">${hc}</span>
-              </button>
-              <a class="thoughts-link" href="#" onclick="event.preventDefault();event.stopPropagation();openSolutionModal(${p.id},\`${p.text.replace(/`/g,"'")}\`);return false;">Thoughts →</a>
-            </div>
+
+    // Render a single thought or reply
+    const renderOne=(s,isReply)=>{
+      const voted=helpfulVoted[s.id];
+      const hc=s.helpful_count||0;
+      const sTs=getRelativeTime(s.created_at);
+      const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
+      const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
+      const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
+      const replyCount=isReply?0:(repliesByParent[s.id]||[]).length;
+      return `<div class="${isReply?'reply-item':'solution-item'}">
+        ${isReply?'':'<div class="solution-num"></div>'}
+        <div class="solution-body">
+          ${sChip}
+          <div class="solution-box">"${escapeHTML(s.text)}"</div>
+          <div class="solution-footer">
+            <button class="helpful-btn${voted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})" aria-label="Mark helpful">
+              <span class="helpful-icon">👍</span>
+              <span class="helpful-count" id="helpful-count-${s.id}">${hc}</span>
+            </button>
+            ${isReply?'':`<button class="thoughts-link" type="button" onclick="event.stopPropagation();(document.getElementById('reply-input-${s.id}')||{}).focus&&document.getElementById('reply-input-${s.id}').focus()">${replyCount} ${replyCount===1?'Thought':'Thoughts'}</button>`}
           </div>
-        </div>`;
+        </div>
+      </div>`;
+    };
+
+    const solsHTML=topThoughts.length>0
+      ?topThoughts.map(t=>{
+        const replies=(repliesByParent[t.id]||[]).map(r=>renderOne(r,true)).join('');
+        const repliesBlock=replies?`<div class="reply-list">${replies}</div>`:'';
+        const replyForm=`<form class="reply-input-form ghost-input-form" onsubmit="submitReply(event,${t.id},${p.id})" onclick="event.stopPropagation()">
+          <input type="text" class="ghost-input reply-input" id="reply-input-${t.id}" placeholder="Reply…" maxlength="500" autocomplete="off"/>
+        </form>`;
+        return renderOne(t,false)+repliesBlock+replyForm;
       }).join('')
       :`<div class="solution-box" style="color:var(--muted);font-style:normal">No thoughts yet — be the first to share one!</div>`;
+
+    // Main "What's your thought" input — sits above the thoughts list
+    const mainThoughtForm=`<form class="ghost-input-form" onsubmit="submitMainThought(event,${p.id})" onclick="event.stopPropagation()">
+      <input type="text" class="ghost-input thought-input" placeholder="What’s your thought on this? Your insight might help someone today." maxlength="500" autocomplete="off"/>
+    </form>`;
     const isSingle=currentProblemId===p.id;
     const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
     const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
@@ -1201,15 +1242,13 @@ function render(){
           <span class="metoo-count" id="count-${p.id}">${(p.metoo_count||0).toLocaleString()}</span>
           <span class="metoo-label">${m?'same!':'me too'}</span>
         </button>
-        <span class="card-meta-item" id="thoughts-count-${p.id}">💬 ${solCount} ${solCount===1?'Thought':'Thoughts'}</span>
+        <span class="card-meta-item" id="thoughts-count-${p.id}">${totalCount} ${totalCount===1?'Thought':'Thoughts'}</span>
         ${isSingle?'':`<span class="card-meta-dot">·</span>
         <span class="card-meta-item" id="toggle-${p.id}">See thoughts ↓</span>`}
       </div>
       <div class="card-expanded">
+        ${mainThoughtForm}
         ${solsHTML}
-        <div class="solution-actions">
-          <button class="sol-btn sol-btn-ghost" onclick="event.stopPropagation();openSolutionModal(${p.id},\`${p.text.replace(/`/g,"'")}\`)">+ Add your solution</button>
-        </div>
       </div>
     </div>`;
   }).join('');
@@ -1580,25 +1619,70 @@ function closeSolutionModal(){document.getElementById('solutionOverlay').classLi
 function closeSolutionOutside(e){if(e.target===document.getElementById('solutionOverlay'))closeSolutionModal();}
 
 async function submitSolution(){
+  // Legacy modal flow — delegated to postThought(); kept for backward compat with the modal.
   const text=document.getElementById('solutionText').value.trim();
-  if(!text){showToast('Please describe your solution first.');return;}
+  if(!text){showToast('Please share your thought first.');return;}
   if(!currentSolutionProblemId)return;
-  const authorName=getUserName();
   const btn=document.getElementById('solutionSubmitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
-  const nowIso=new Date().toISOString();
-  const{error}=await db.from('solutions').insert({problem_id:currentSolutionProblemId,text,helpful_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null});
-  if(error){btn.disabled=false;btn.textContent='Submit Solution →';showToast('Something went wrong.');return;}
-  const p=allProblems.find(x=>x.id===currentSolutionProblemId);
-  if(p){
-    p.solution_count=(p.solution_count||0)+1;
-    if(!p.solutions)p.solutions=[];
-    p.solutions.push({id:Date.now(),text,helpful_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType,author_avatar_data:isPhotoAvatar()?identity.avatarData:null,created_at:nowIso});
-    await db.from('problems').update({solution_count:p.solution_count}).eq('id',currentSolutionProblemId);
-  }
+  const ok=await postThought(currentSolutionProblemId,text,null);
   btn.disabled=false;btn.textContent='Submit Solution →';
+  if(!ok)return;
   closeSolutionModal();render();fetchStats();
-  showToast('✅ Solution added! Thank you.');
+  showToast('💭 Thought added! Thank you.');
+}
+
+// Single insert path for both top-level thoughts and nested replies.
+// parentId is the parent solution.id for replies, or null for top-level thoughts.
+async function postThought(problemId,text,parentId){
+  const clean=(text||'').trim();
+  if(!clean)return false;
+  const authorName=getUserName();
+  const nowIso=new Date().toISOString();
+  const payload={
+    problem_id:problemId,
+    text:clean,
+    helpful_count:0,
+    author_name:authorName,
+    author_avatar:getAvatar(),
+    author_avatar_type:identity?.avatarType||'emoji',
+    author_avatar_data:isPhotoAvatar()?identity.avatarData:null
+  };
+  if(parentId)payload.parent_id=parentId;
+  const{data,error}=await db.from('solutions').insert(payload).select().single();
+  if(error){showToast('Something went wrong: '+(error.message||'unknown'));return false;}
+  const p=allProblems.find(x=>x.id===problemId);
+  if(p){
+    if(!p.solutions)p.solutions=[];
+    p.solutions.push(data||{...payload,id:Date.now(),created_at:nowIso});
+    p.solution_count=(p.solution_count||0)+1;
+    db.from('problems').update({solution_count:p.solution_count}).eq('id',problemId).then(()=>{});
+  }
+  return true;
+}
+
+async function submitMainThought(event,problemId){
+  event.preventDefault();event.stopPropagation();
+  const input=event.target.querySelector('input');
+  if(!input)return;
+  const text=input.value;
+  const ok=await postThought(problemId,text,null);
+  if(!ok)return;
+  input.value='';
+  render();fetchStats();
+  showToast('💭 Thought added!');
+}
+
+async function submitReply(event,thoughtId,problemId){
+  event.preventDefault();event.stopPropagation();
+  const input=event.target.querySelector('input');
+  if(!input)return;
+  const text=input.value;
+  const ok=await postThought(problemId,text,thoughtId);
+  if(!ok)return;
+  input.value='';
+  render();fetchStats();
+  showToast('↳ Reply added!');
 }
 
 function showToast(msg){
