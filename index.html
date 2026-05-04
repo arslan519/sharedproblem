@@ -264,8 +264,8 @@
     .sol-author-avatar{width:16px;height:16px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);overflow:hidden;}
     .sol-author-avatar img{width:100%;height:100%;object-fit:cover;}
     .sol-author-name{font-size:10px;font-family:'DM Mono',monospace;color:#888;font-style:italic;}
-    /* Solution body — flat, just a left rule. No background, no full border. */
-    .solution-box{background:none;border:none;border-left:2px solid var(--orange);border-radius:0;padding:2px 0 2px 12px;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
+    /* Solution body — fully flat. No background, no border, no left rule. */
+    .solution-box{background:none;border:none;border-radius:0;padding:0;margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--text2);font-style:italic;}
     /* Ghost-style helpful button */
     .helpful-btn{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--border);border-radius:7px;padding:4px 10px;cursor:pointer;transition:all 0.2s;}
     .helpful-btn:hover{border-color:rgba(74,222,128,0.4);background:transparent;color:var(--green);}
@@ -1187,7 +1187,7 @@ function render(){
           </div>
         </div>`;
       }).join('')
-      :`<div class="solution-box" style="color:var(--muted);font-style:normal">No solutions yet — be the first!</div>`;
+      :`<div class="solution-box" style="color:var(--muted);font-style:normal">No thoughts yet — be the first to share one!</div>`;
     const isSingle=currentProblemId===p.id;
     const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
     const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
@@ -1201,9 +1201,9 @@ function render(){
           <span class="metoo-count" id="count-${p.id}">${(p.metoo_count||0).toLocaleString()}</span>
           <span class="metoo-label">${m?'same!':'me too'}</span>
         </button>
-        <span class="card-meta-item">💬 ${solCount} solution${solCount!==1?'s':''}</span>
+        <span class="card-meta-item" id="thoughts-count-${p.id}">💬 ${solCount} ${solCount===1?'Thought':'Thoughts'}</span>
         ${isSingle?'':`<span class="card-meta-dot">·</span>
-        <span class="card-meta-item" id="toggle-${p.id}">See solutions ↓</span>`}
+        <span class="card-meta-item" id="toggle-${p.id}">See thoughts ↓</span>`}
       </div>
       <div class="card-expanded">
         ${solsHTML}
@@ -1218,7 +1218,7 @@ function render(){
 function toggleCard(id){
   const card=document.getElementById('card-'+id);
   const toggle=document.getElementById('toggle-'+id);
-  toggle.textContent=card.classList.toggle('expanded')?'Hide ↑':'See solutions ↓';
+  toggle.textContent=card.classList.toggle('expanded')?'Hide ↑':'See thoughts ↓';
 }
 
 // Trigger a brief pop animation on a counter element
