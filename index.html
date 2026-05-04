@@ -19,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
-      --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      --font:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
       --orange:#fb923c;--orange-dark:#ea580c;--orange-dim:rgba(251,146,60,0.12);--orange-border:rgba(251,146,60,0.28);
       --bg:#0a0a0c;--bg2:#111113;--surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.05);
       --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
@@ -437,6 +437,42 @@
     .profile-avatar-big:hover .edit-overlay{opacity:1;}
     #profileFileInput{display:none;}
 
+    /* AUTH MODAL — login / signup tabs */
+    .auth-modal{max-width:420px;}
+    .auth-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;margin-top:4px;}
+    .auth-tab{
+      flex:1;background:none;border:none;padding:10px 0;cursor:pointer;
+      font-family:var(--font);font-size:13px;font-weight:600;color:var(--muted);
+      border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.18s;
+    }
+    .auth-tab:hover{color:var(--text2);}
+    .auth-tab.active{color:var(--orange);border-bottom-color:var(--orange);}
+    .auth-warn{
+      background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);
+      border-radius:9px;padding:10px 12px;font-size:12px;line-height:1.5;
+      color:#f87171;margin-bottom:14px;
+    }
+    .auth-error{
+      background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);
+      border-radius:9px;padding:8px 12px;font-size:12px;color:#f87171;margin-bottom:14px;
+    }
+    /* DiceBear avatar — for logged-in users */
+    .dicebear-avatar{width:32px;height:32px;border-radius:50%;background:#fff;flex-shrink:0;display:block;}
+    .reply-item .dicebear-avatar{width:22px;height:22px;}
+    /* OP badge — when a thought author matches the problem author */
+    .op-badge{
+      display:inline-block;background:var(--orange);color:#0a0a0c;
+      font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;
+      letter-spacing:0.6px;margin-left:6px;vertical-align:middle;
+    }
+    /* Auth nav button */
+    .auth-nav-btn{
+      background:none;border:1px solid var(--border);color:var(--text2);
+      font-family:var(--font);font-size:11px;font-weight:600;
+      padding:5px 12px;border-radius:8px;cursor:pointer;transition:all 0.18s;
+    }
+    .auth-nav-btn:hover{border-color:var(--orange-border);color:var(--orange);background:var(--orange-dim);}
+
     /* Toast */
     .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#17171a;border:2px solid var(--orange);border-radius:11px;padding:14px 24px;font-size:14px;font-family:var(--font);color:var(--text);z-index:99999;display:none;white-space:nowrap;box-shadow:0 8px 32px rgba(251,146,60,0.5);}
     .toast.show{display:block;animation:fadeUp 0.3s ease;}
@@ -589,6 +625,7 @@
       <button class="nav-link" onclick="showPage('terms')" id="nav-terms">Terms</button>
     </div>
     <div class="nav-right">
+      <button class="auth-nav-btn" id="authNavBtn" type="button" onclick="onAuthNavClick()">Log in</button>
       <div class="nav-profile" onclick="openProfileModal()" id="navProfile">
         <div class="nav-avatar" id="navAvatarWrap"></div>
         <span class="nav-name" id="navName">You</span>
@@ -889,6 +926,33 @@
   </div>
 </div>
 
+<!-- AUTH MODAL — username + password, no email -->
+<div class="modal-overlay" id="authOverlay" onclick="closeAuthOutside(event)">
+  <div class="modal auth-modal">
+    <button class="modal-close" onclick="closeAuthModal()">✕ close</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="authTabLogin" type="button" onclick="switchAuthTab('login')">Log in</button>
+      <button class="auth-tab" id="authTabSignup" type="button" onclick="switchAuthTab('signup')">Sign up</button>
+    </div>
+    <h3 id="authTitle">Welcome back</h3>
+    <p class="modal-sub" id="authSub">Log in with your username and password.</p>
+
+    <label>Username</label>
+    <input id="authUsername" class="modal-name-input" type="text" maxlength="20" autocomplete="off" placeholder="3–20 characters: a–z, 0–9, _ -"/>
+
+    <label>Password</label>
+    <input id="authPassword" class="modal-name-input" type="password" autocomplete="off" placeholder="At least 6 characters"/>
+
+    <div class="auth-warn" id="authWarn" style="display:none;">⚠ <strong>We do not use emails.</strong> If you lose your password, your account cannot be recovered.</div>
+    <div class="auth-error" id="authError" style="display:none;"></div>
+
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeAuthModal()">Cancel</button>
+      <button class="modal-submit" id="authSubmitBtn" onclick="submitAuth()">Log in →</button>
+    </div>
+  </div>
+</div>
+
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="backdropCloseHandler(event)"></div>
 <div class="toast" id="toast"></div>
 
@@ -935,11 +999,120 @@ function getUserId(){
   return id;
 }
 
-// True if the current browser is the author of `item` (problem or thought).
-// Returns false for legacy rows where author_id is null/missing.
+// ── Auth: username/password (no email, no recovery) ────────────────
+function getAuthUsername(){return localStorage.getItem('auth_username');}
+function isLoggedIn(){return !!getAuthUsername();}
+
+// SHA-256(username + ':' + password) — fast hash, salted by username.
+// Not bcrypt-grade. Good enough for the site's "best-effort anonymous" trust model.
+async function hashPassword(username,password){
+  const data=new TextEncoder().encode(String(username).toLowerCase()+':'+String(password));
+  const buf=await crypto.subtle.digest('SHA-256',data);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function authSignup(username,password){
+  username=String(username||'').trim().toLowerCase();
+  if(!/^[a-z0-9_-]{3,20}$/.test(username))return{error:'Username must be 3–20 chars: lowercase a–z, 0–9, _ or -.'};
+  if(!password||password.length<6)return{error:'Password must be at least 6 characters.'};
+  const password_hash=await hashPassword(username,password);
+  const{error}=await db.from('profiles').insert({username,password_hash});
+  if(error){
+    if(error.code==='23505'||/duplicate|unique/i.test(error.message||''))return{error:'Name already taken. Try another.'};
+    return{error:error.message||'Signup failed.'};
+  }
+  localStorage.setItem('auth_username',username);
+  return{ok:true};
+}
+
+async function authLogin(username,password){
+  username=String(username||'').trim().toLowerCase();
+  if(!username||!password)return{error:'Enter your username and password.'};
+  const password_hash=await hashPassword(username,password);
+  const{data,error}=await db.from('profiles').select('username').eq('username',username).eq('password_hash',password_hash).maybeSingle();
+  if(error)return{error:error.message||'Login failed.'};
+  if(!data)return{error:'Invalid username or password.'};
+  localStorage.setItem('auth_username',username);
+  return{ok:true};
+}
+
+function authLogout(){
+  localStorage.removeItem('auth_username');
+  renderAuthNav();
+  render();
+  showToast('Logged out.');
+}
+
+// DiceBear identicon URL for a username (32x32 SVG).
+function getAvatarUrl(username){
+  if(!username)return null;
+  return'https://api.dicebear.com/7.x/identicon/svg?seed='+encodeURIComponent(String(username).toLowerCase());
+}
+
+// True if the current viewer is the author of `item` (problem or thought).
+// Logged-in: match by author_name vs current username. Anonymous: legacy author_id check.
 function isAuthor(item){
-  if(!item||!item.author_id)return false;
-  return item.author_id===getUserId();
+  if(!item)return false;
+  const auth=getAuthUsername();
+  if(auth&&item.author_name&&item.author_name.toLowerCase()===auth.toLowerCase())return true;
+  if(item.author_id&&item.author_id===getUserId())return true;
+  return false;
+}
+
+// ── Auth modal UI ───────────────────────────────────
+let authMode='login';
+function openAuthModal(mode){
+  authMode=mode==='signup'?'signup':'login';
+  switchAuthTab(authMode);
+  document.getElementById('authUsername').value='';
+  document.getElementById('authPassword').value='';
+  document.getElementById('authError').style.display='none';
+  document.getElementById('authOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeAuthModal(){
+  document.getElementById('authOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeAuthOutside(e){if(e.target===document.getElementById('authOverlay'))closeAuthModal();}
+function switchAuthTab(mode){
+  authMode=mode;
+  document.getElementById('authTabLogin').classList.toggle('active',mode==='login');
+  document.getElementById('authTabSignup').classList.toggle('active',mode==='signup');
+  document.getElementById('authTitle').textContent=mode==='signup'?'Create your account':'Welcome back';
+  document.getElementById('authSub').textContent=mode==='signup'?'Pick a username and password. No email required.':'Log in with your username and password.';
+  document.getElementById('authWarn').style.display=mode==='signup'?'block':'none';
+  document.getElementById('authSubmitBtn').textContent=(mode==='signup'?'Sign up':'Log in')+' →';
+  document.getElementById('authError').style.display='none';
+}
+async function submitAuth(){
+  const u=document.getElementById('authUsername').value;
+  const p=document.getElementById('authPassword').value;
+  const errEl=document.getElementById('authError');
+  const btn=document.getElementById('authSubmitBtn');
+  btn.disabled=true;const orig=btn.textContent;btn.textContent='…';
+  const res=authMode==='signup'?await authSignup(u,p):await authLogin(u,p);
+  btn.disabled=false;btn.textContent=orig;
+  if(res.error){errEl.textContent=res.error;errEl.style.display='block';return;}
+  closeAuthModal();renderAuthNav();render();
+  showToast((authMode==='signup'?'✅ Welcome, ':'✅ Logged in as ')+getAuthUsername());
+}
+function onAuthNavClick(){
+  if(isLoggedIn()){
+    if(confirm('Log out of '+getAuthUsername()+'?'))authLogout();
+  }else{
+    openAuthModal('login');
+  }
+}
+// Update the nav button to reflect auth state
+function renderAuthNav(){
+  const btn=document.getElementById('authNavBtn');
+  if(!btn)return;
+  if(isLoggedIn()){
+    btn.textContent=getAuthUsername()+' • Log out';
+  }else{
+    btn.textContent='Log in';
+  }
 }
 
 function updatePostingAs(){
@@ -1107,12 +1280,20 @@ function getRelativeTime(dateString){
 }
 
 function authorChipHTML(name,avatar,avatarType,avatarData,createdAt){
-  let avatarEl=avatarType==='photo'&&avatarData
-    ?`<div class="author-avatar-sm"><img src="${avatarData}" alt=""/></div>`
-    :`<div class="author-avatar-sm" style="font-size:12px;">${avatar||'🌀'}</div>`;
+  const safeName=name||'Anonymous';
+  // Logged-in usernames get a DiceBear identicon. Photo uploads / emoji fall through.
+  const looksLikeUsername=/^[a-z0-9_-]{3,20}$/.test(safeName);
+  let avatarEl;
+  if(looksLikeUsername){
+    avatarEl=`<img class="dicebear-avatar" src="${getAvatarUrl(safeName)}" alt="" />`;
+  } else if(avatarType==='photo'&&avatarData){
+    avatarEl=`<div class="author-avatar-sm"><img src="${avatarData}" alt=""/></div>`;
+  } else {
+    avatarEl=`<div class="author-avatar-sm" style="font-size:12px;">${avatar||'🌀'}</div>`;
+  }
   const ts=getRelativeTime(createdAt);
   const tsHTML=ts?`<span class="timestamp-sep">•</span><span class="timestamp">${ts}</span>`:'';
-  return `<div class="author-chip">${avatarEl}<span class="author-name-sm">${name||'Anonymous'}</span>${tsHTML}</div>`;
+  return `<div class="author-chip">${avatarEl}<span class="author-name-sm">${escapeHTML(safeName)}</span>${tsHTML}</div>`;
 }
 
 async function init(){
@@ -1124,6 +1305,7 @@ async function init(){
     localStorage.setItem('sp_identity',JSON.stringify(identity));
   }
   populateNameInputs();
+  renderAuthNav();
   if(!localStorage.getItem('sp_welcomed')){
     document.getElementById('welcomeOverlay').classList.remove('hidden');
   } else {
@@ -1237,6 +1419,9 @@ function render(){
     const m=metooed[p.id];
     const chip=authorChipHTML(p.author_name,p.author_avatar,p.author_avatar_type,p.author_avatar_data,p.created_at);
 
+    // Problem author for OP badge comparison (case-insensitive).
+    // Distinct from `problemAuthor` (boolean: is viewer the author?) declared further down.
+    const problemAuthorName=(p.author_name||'').toLowerCase();
     // Render a single thought or reply
     const renderOne=(s,isReply)=>{
       const voted=helpfulVoted[s.id];
@@ -1244,7 +1429,15 @@ function render(){
       const sTs=getRelativeTime(s.created_at);
       const sTsHTML=sTs?`<span class="timestamp-sep">•</span><span class="timestamp">${sTs}</span>`:'';
       const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
-      const sChip=`<div class="sol-author"><div class="sol-author-avatar">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
+      // OP badge: this thought's author matches the parent problem's author (and isn't Anonymous)
+      const isOP=problemAuthorName && sAuthor.toLowerCase()===problemAuthorName && sAuthor!=='Anonymous';
+      const opHTML=isOP?'<span class="op-badge">OP</span>':'';
+      // Logged-in usernames get a DiceBear identicon. Anonymous still uses emoji avatar.
+      const looksLikeUsername=/^[a-z0-9_-]{3,20}$/.test(sAuthor);
+      const avatarHTML=looksLikeUsername
+        ?`<img class="dicebear-avatar" src="${getAvatarUrl(sAuthor)}" alt="" />`
+        :`<div class="sol-author-avatar">${s.author_avatar||'🌀'}</div>`;
+      const sChip=`<div class="sol-author">${avatarHTML}<span class="sol-author-name">${escapeHTML(sAuthor)}</span>${opHTML}${sTsHTML}</div>`;
       const replyCount=isReply?0:(repliesByParent[s.id]||[]).length;
       const isEditingThis=editingThoughtId===s.id;
       const thoughtAuthor=isAuthor(s);
@@ -1683,7 +1876,8 @@ async function submitProblem(){
   const text=stripHTML(document.getElementById('problemText').value);
   const category=document.getElementById('problemCat').value;
   if(!text){showToast('Please describe your problem first.');return;}
-  const authorName=getUserName();
+  // Logged-in users post under their username; anonymous fall back to nickname/Anonymous.
+  const authorName=getAuthUsername()||getUserName();
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
   const{data,error}=await db.from('problems').insert({text,category,metoo_count:1,solution_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null,author_id:getUserId()}).select().single();
@@ -1731,7 +1925,8 @@ async function postThought(problemId,text,parentId){
   if(!clean)return false;
   const pid=problemId?Number(problemId):null;
   const parent=parentId?Number(parentId):null;
-  const authorName=getUserName();
+  // Logged-in users post under their username; anonymous fall back to nickname/Anonymous.
+  const authorName=getAuthUsername()||getUserName();
   const nowIso=new Date().toISOString();
   const payload={
     problem_id:pid,
