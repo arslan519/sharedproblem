@@ -273,6 +273,22 @@
     .helpful-icon{font-size:12px;line-height:1;}
     .helpful-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);font-weight:600;}
     .helpful-btn:hover .helpful-count,.helpful-btn.voted .helpful-count{color:var(--green);}
+    /* Header row: category label on the left, author actions on the right */
+    .card-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+    .card-header-row .card-cat{margin-bottom:0;}
+    /* Author actions — Edit/Delete links visible only to the post's author */
+    .author-actions{display:inline-flex;align-items:center;gap:8px;margin-left:auto;}
+    .author-action{background:none;border:none;color:rgba(255,255,255,0.32);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;padding:2px 4px;transition:color 0.18s;}
+    .author-action:hover{color:var(--orange);}
+    .author-action.delete:hover{color:#f87171;}
+    /* Edit-mode textarea + Save/Cancel row */
+    .edit-textarea{width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--orange-border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Lora',serif;font-size:14px;line-height:1.5;outline:none;resize:vertical;min-height:80px;margin-bottom:8px;}
+    .edit-textarea:focus{border-color:var(--orange);}
+    .edit-actions{display:flex;gap:8px;margin-bottom:8px;}
+    .edit-save{background:linear-gradient(135deg,#fb923c,#ea580c);border:none;border-radius:8px;padding:6px 14px;color:#fff;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;}
+    .edit-cancel{background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;}
+    .edit-cancel:hover{color:var(--text2);border-color:var(--border2);}
+
     /* Thought footer — flex row: thumbs-up + reply count on same line */
     .solution-footer{display:flex;align-items:center;gap:14px;margin-top:6px;}
     .thoughts-link{font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);text-decoration:none;cursor:pointer;transition:color 0.18s;background:none;border:none;padding:0;}
@@ -907,6 +923,24 @@ function getUserName(){
   return idName||'Anonymous';
 }
 
+// Per-browser anonymous UUID, generated on first use and persisted in localStorage.
+// Sent as author_id with every new post; lets us show Edit/Delete only to the original author.
+function getUserId(){
+  let id=localStorage.getItem('user_id');
+  if(!id){
+    id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():('anon-'+Date.now()+'-'+Math.random().toString(36).slice(2,10));
+    localStorage.setItem('user_id',id);
+  }
+  return id;
+}
+
+// True if the current browser is the author of `item` (problem or thought).
+// Returns false for legacy rows where author_id is null/missing.
+function isAuthor(item){
+  if(!item||!item.author_id)return false;
+  return item.author_id===getUserId();
+}
+
 function updatePostingAs(){
   const n=getUserName();
   const e1=document.getElementById('postingAs');
@@ -1046,6 +1080,8 @@ const seedData=[
 let allProblems=[];
 let activeCat='All';
 let currentProblemId=null;  // when set, render() shows only this one problem
+let editingProblemId=null;  // when set, that problem renders as a textarea
+let editingThoughtId=null;  // when set, that thought/reply renders as a textarea
 const DEFAULT_TITLE='Shared Problem — You Are Not Alone';
 const DEFAULT_DESCRIPTION='Type any problem. Find out how many others share it — and what actually worked for them.';
 let metooed=JSON.parse(localStorage.getItem('sp_metooed')||'{}');
@@ -1207,18 +1243,32 @@ function render(){
       const sAuthor=(s.author_name&&s.author_name.trim())||'Anonymous';
       const sChip=`<div class="sol-author"><div class="sol-author-avatar" style="font-size:10px;">${s.author_avatar||'🌀'}</div><span class="sol-author-name">${escapeHTML(sAuthor)}</span>${sTsHTML}</div>`;
       const replyCount=isReply?0:(repliesByParent[s.id]||[]).length;
-      return `<div class="${isReply?'reply-item':'solution-item'}">
-        ${isReply?'':'<div class="solution-num"></div>'}
-        <div class="solution-body">
-          ${sChip}
-          <div class="solution-box">"${escapeHTML(s.text)}"</div>
+      const isEditingThis=editingThoughtId===s.id;
+      const thoughtAuthor=isAuthor(s);
+      const thoughtActions=thoughtAuthor?`<div class="author-actions">
+        <button class="author-action" type="button" onclick="event.stopPropagation();startEditThought(${s.id})">Edit</button>
+        <button class="author-action delete" type="button" onclick="event.stopPropagation();deleteThought(${s.id},${p.id})">Delete</button>
+      </div>`:'';
+      const bodyHTML=isEditingThis
+        ?`<textarea class="edit-textarea" id="edit-thought-${s.id}" onclick="event.stopPropagation()">${escapeHTML(s.text)}</textarea>
+          <div class="edit-actions">
+            <button class="edit-save" type="button" onclick="event.stopPropagation();saveThoughtEdit(${s.id},${p.id})">Save</button>
+            <button class="edit-cancel" type="button" onclick="event.stopPropagation();cancelEdit()">Cancel</button>
+          </div>`
+        :`<div class="solution-box">"${escapeHTML(s.text)}"</div>
           <div class="solution-footer">
             <button class="helpful-btn${voted?' voted':''}" id="helpful-${s.id}" onclick="event.stopPropagation();markHelpful(${s.id},${p.id})" aria-label="Mark helpful">
               <span class="helpful-icon">👍</span>
               <span class="helpful-count" id="helpful-count-${s.id}">${hc}</span>
             </button>
             ${isReply?'':`<button class="thoughts-link" type="button" onclick="event.stopPropagation();(document.getElementById('reply-input-${s.id}')||{}).focus&&document.getElementById('reply-input-${s.id}').focus()">${replyCount} ${replyCount===1?'Thought':'Thoughts'}</button>`}
-          </div>
+            ${thoughtActions}
+          </div>`;
+      return `<div class="${isReply?'reply-item':'solution-item'}">
+        ${isReply?'':'<div class="solution-num"></div>'}
+        <div class="solution-body">
+          ${sChip}
+          ${bodyHTML}
         </div>
       </div>`;
     };
@@ -1247,10 +1297,26 @@ function render(){
     const isSingle=currentProblemId===p.id;
     const cardOnclick=isSingle?'':`onclick="toggleCard(${p.id})"`;
     const textOnclick=isSingle?'':`onclick="event.stopPropagation();showSingleProblem(${p.id})"`;
+    const problemAuthor=isAuthor(p);
+    const problemActions=problemAuthor?`<div class="author-actions">
+      <button class="author-action" type="button" onclick="event.stopPropagation();startEditProblem(${p.id})">Edit</button>
+      <button class="author-action delete" type="button" onclick="event.stopPropagation();deleteProblem(${p.id})">Delete</button>
+    </div>`:'';
+    const isEditingProblem=editingProblemId===p.id;
+    const problemTextHTML=isEditingProblem
+      ?`<textarea class="edit-textarea" id="edit-problem-${p.id}" onclick="event.stopPropagation()">${escapeHTML(p.text)}</textarea>
+        <div class="edit-actions">
+          <button class="edit-save" type="button" onclick="event.stopPropagation();saveProblemEdit(${p.id})">Save</button>
+          <button class="edit-cancel" type="button" onclick="event.stopPropagation();cancelEdit()">Cancel</button>
+        </div>`
+      :`<div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>`;
     return `<div class="card${isSingle?' expanded':''}" id="card-${p.id}" ${cardOnclick} style="animation-delay:${i*45}ms">
-      <div class="card-cat">${displayCategory(p.category)}</div>
+      <div class="card-header-row">
+        <div class="card-cat">${displayCategory(p.category)}</div>
+        ${problemActions}
+      </div>
       ${chip}
-      <div class="card-text" ${textOnclick}>${highlightMatch(p.text,currentProblemId!==null?'':q)}</div>
+      ${problemTextHTML}
       <div class="card-meta">
         <button class="metoo-btn${m?' active':''}" id="btn-${p.id}" onclick="event.stopPropagation();doMeToo(${p.id})">
           <span class="metoo-icon">${m?'🔥':'👆'}</span>
@@ -1612,7 +1678,7 @@ async function submitProblem(){
   const authorName=getUserName();
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='Submitting...';
-  const{data,error}=await db.from('problems').insert({text,category,metoo_count:1,solution_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null}).select().single();
+  const{data,error}=await db.from('problems').insert({text,category,metoo_count:1,solution_count:0,author_name:authorName,author_avatar:getAvatar(),author_avatar_type:identity?.avatarType||'emoji',author_avatar_data:isPhotoAvatar()?identity.avatarData:null,author_id:getUserId()}).select().single();
   btn.disabled=false;btn.textContent='Submit →';
   if(error){showToast('Something went wrong. Please try again.');return;}
   closeModal();document.getElementById('problemText').value='';
@@ -1665,7 +1731,8 @@ async function postThought(problemId,text,parentId){
     author_name:authorName,
     author_avatar:getAvatar(),
     author_avatar_type:identity?.avatarType||'emoji',
-    author_avatar_data:isPhotoAvatar()?identity.avatarData:null
+    author_avatar_data:isPhotoAvatar()?identity.avatarData:null,
+    author_id:getUserId()
   };
   if(parent)payload.parent_id=parent;
   const{data,error}=await db.from('solutions').insert(payload).select().single();
@@ -1702,6 +1769,86 @@ async function submitMainThought(event,problemId){
   input.value='';
   render();fetchStats();
   showToast('💭 Thought added!');
+}
+
+// ── Edit / Delete (problems and thoughts) ───────────────
+function startEditProblem(id){
+  editingProblemId=id;editingThoughtId=null;
+  render();
+  setTimeout(()=>{const ta=document.getElementById('edit-problem-'+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},0);
+}
+
+function startEditThought(id){
+  editingThoughtId=id;editingProblemId=null;
+  render();
+  setTimeout(()=>{const ta=document.getElementById('edit-thought-'+id);if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);}},0);
+}
+
+function cancelEdit(){
+  editingProblemId=null;editingThoughtId=null;
+  render();
+}
+
+async function saveProblemEdit(id){
+  const ta=document.getElementById('edit-problem-'+id);
+  if(!ta)return;
+  const newText=ta.value.trim();
+  if(!newText){showToast('Problem text cannot be empty.');return;}
+  const{error}=await db.from('problems').update({text:newText}).eq('id',id).eq('author_id',getUserId());
+  if(error){showToast('Could not save: '+(error.message||'unknown'));return;}
+  const p=allProblems.find(x=>x.id===id);
+  if(p)p.text=newText;
+  // If user is on the single-problem page, refresh meta tags too
+  if(currentProblemId===id){
+    const title=truncate(newText,60)+' | Shared Problem';
+    let description=DEFAULT_DESCRIPTION;
+    if(p&&p.solutions&&p.solutions[0]&&p.solutions[0].text)description=truncate(p.solutions[0].text,160);
+    updateMetaTags(title,description);
+  }
+  editingProblemId=null;
+  render();
+  showToast('✏️ Updated.');
+}
+
+async function saveThoughtEdit(id,problemId){
+  const ta=document.getElementById('edit-thought-'+id);
+  if(!ta)return;
+  const newText=ta.value.trim();
+  if(!newText){showToast('Thought cannot be empty.');return;}
+  const{error}=await db.from('solutions').update({text:newText}).eq('id',id).eq('author_id',getUserId());
+  if(error){showToast('Could not save: '+(error.message||'unknown'));return;}
+  const p=allProblems.find(x=>x.id===problemId);
+  if(p&&p.solutions){const s=p.solutions.find(x=>x.id===id);if(s)s.text=newText;}
+  editingThoughtId=null;
+  render();
+  showToast('✏️ Updated.');
+}
+
+async function deleteProblem(id){
+  if(!confirm('Delete this problem and all its thoughts? This cannot be undone.'))return;
+  // Delete all solutions for this problem first (replies cascade via parent_id ON DELETE CASCADE)
+  await db.from('solutions').delete().eq('problem_id',id);
+  const{error}=await db.from('problems').delete().eq('id',id).eq('author_id',getUserId());
+  if(error){showToast('Could not delete: '+(error.message||'unknown'));return;}
+  allProblems=allProblems.filter(p=>p.id!==id);
+  if(currentProblemId===id)showFeed();
+  render();fetchStats();
+  showToast('🗑️ Problem deleted.');
+}
+
+async function deleteThought(id,problemId){
+  if(!confirm('Delete this thought? Any replies under it will also be deleted.'))return;
+  // Replies cascade via parent_id ON DELETE CASCADE; the parent delete is enough.
+  const{error}=await db.from('solutions').delete().eq('id',id).eq('author_id',getUserId());
+  if(error){showToast('Could not delete: '+(error.message||'unknown'));return;}
+  const p=allProblems.find(x=>x.id===problemId);
+  if(p&&p.solutions){
+    p.solutions=p.solutions.filter(s=>s.id!==id&&s.parent_id!==id);
+    p.solution_count=p.solutions.length;
+    db.from('problems').update({solution_count:p.solution_count}).eq('id',problemId).then(()=>{});
+  }
+  render();fetchStats();
+  showToast('🗑️ Thought deleted.');
 }
 
 async function submitReply(event,thoughtId,problemId){
